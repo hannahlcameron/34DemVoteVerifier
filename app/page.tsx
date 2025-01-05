@@ -13,7 +13,8 @@ Amplify.configure(outputs);
 
 const client = generateClient<Schema>();
 
-type PollResult = { name: string; lines: string[] };
+type Vote = { username: string, email: string, time:string, vote: string };
+type PollResult = { name: string; votes: Vote[],  };
 
 export default function App() {
   const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
@@ -61,9 +62,16 @@ export default function App() {
         let match;
         while ((match = blockRegex.exec(csv)) !== null) {
             const pollName = match[1];
-            const pollLines = match[2].split("\n").filter(line => line.trim() !== "");
-            //const pollLines = ["1", "2"];
-            results.push({ name: pollName, lines: pollLines });
+            const votes = match[2].split("\n")
+                .filter(line => line.trim() !== "")
+                .map(line => {
+                    const [_, username, email, time, vote] = line.split(",");
+                    return { username, email, time, vote } as Vote;
+                });
+
+
+            const pollResult: PollResult = {name: pollName, votes: votes };
+            results.push(pollResult);
         }
         return results;
     }
@@ -115,10 +123,23 @@ export default function App() {
                 {poll.name}
                 Lines:
                 <ol>
-                    {poll.lines.map((line, index) => (
-                        <li key={index}>{line}</li>
+                    {poll.votes.map((vote, index) => (
+
+                        <li>
+                        <dl>
+                            <dt>username</dt>
+                            <dd>{vote.username}</dd>
+
+                            <dt>email</dt>
+                            <dd>{vote.email}</dd>
+
+                            <dt>username</dt>
+                            <dd>{vote.vote}</dd>
+                        </dl>
+
+                        </li>
                         ))}
-                </ol>
+            </ol>
             </div>
         ))}
         end results
