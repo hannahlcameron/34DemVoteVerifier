@@ -13,9 +13,13 @@ Amplify.configure(outputs);
 
 const client = generateClient<Schema>();
 
+type PollResult = { name: string; lines: string[] };
+
 export default function App() {
   const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-  const [tableData, setTableData] = useState<{ headers: string[], data: Record<string, string>[] } | null>(null);
+  const [memberData, setMemberData] = useState<{ headers: string[], data: Record<string, string>[] } | null>(null);
+  const [pollResults, setPollResults] = useState<PollResult[]>([]);
+
 
   function listTodos() {
     client.models.Todo.observeQuery().subscribe({
@@ -50,14 +54,42 @@ export default function App() {
         return { headers, data };
     }
 
-    function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    function parseCSV(csv: string) {
+        //const blockRegex = /\d+\) ((.*)\n(?:#.*\n)(.+\n)*)/gm
+        const blockRegex = /\d+\) (.*)\r\n(?:#.*\r\n)((?:.+\r\n)*)/gm
+        const results = [];
+        let match;
+        while ((match = blockRegex.exec(csv)) !== null) {
+            const pollName = match[1];
+            const pollLines = match[2].split("\n").filter(line => line.trim() !== "");
+            //const pollLines = ["1", "2"];
+            results.push({ name: pollName, lines: pollLines });
+        }
+        return results;
+    }
+
+    function handleMembersUpload(event: React.ChangeEvent<HTMLInputElement>) {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const tsv = e.target?.result as string;
                 const parsedData = parseTSV(tsv);
-                setTableData(parsedData);
+                setMemberData(parsedData);
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    function handleZoomUpload(event: React.ChangeEvent<HTMLInputElement>) {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const csv = e.target?.result as string;
+                //const blockRegex = /.*/g
+                const parsedResults = parseCSV(csv);
+                setPollResults(parsedResults);
             };
             reader.readAsText(file);
         }
@@ -66,15 +98,30 @@ export default function App() {
   return (
     <main>
       <h1>Upload Voters</h1>
-        <input type="file" accept=".txt" onChange={handleFileUpload} />
-        {tableData && (
+        <input type="file" accept=".txt" onChange={handleMembersUpload} />
+        {memberData && (
             <MaterialReactTable
-                columns={tableData.headers.map(header => ({ header, accessorKey: header }))}
-                data={tableData.data}
+                columns={memberData.headers.map(header => ({ header, accessorKey: header }))}
+                data={memberData.data}
             />
         )}
 
-     <h1></h1>
+        <h1>Upload Voters</h1>
+        <input type="file" accept=".csv" onChange={handleZoomUpload} />
+        Results -
+        {pollResults.map((poll, index) => (
+            <div key={index} className="vote-block">
+                Name:
+                {poll.name}
+                Lines:
+                <ol>
+                    {poll.lines.map((line, index) => (
+                        <li key={index}>{line}</li>
+                        ))}
+                </ol>
+            </div>
+        ))}
+        end results
 
       {/*<button onClick={createTodo}>+ new</button>*/}
       {/*<ul>*/}
