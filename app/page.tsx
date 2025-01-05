@@ -13,8 +13,17 @@ Amplify.configure(outputs);
 
 const client = generateClient<Schema>();
 
-type Vote = { username: string, email: string, time:string, vote: string };
-type PollResult = { name: string; votes: Vote[],  };
+type Vote = {
+    username: string,
+    email: string,
+    time:string,
+    vote: string };
+
+type PollResult = {
+    name: string;
+    votes: Vote[];
+    summary: Map<string, number>;
+};
 
 export default function App() {
   const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
@@ -69,8 +78,14 @@ export default function App() {
                     return { username, email, time, vote } as Vote;
                 });
 
+            const summary = new Map<string, number>;
 
-            const pollResult: PollResult = {name: pollName, votes: votes };
+            votes.forEach(vote => {
+                const existing = summary.get(vote.vote) || 0;
+                summary.set(vote.vote, existing + 1);
+            });
+
+            const pollResult: PollResult = {name: pollName, votes: votes, summary: summary };
             results.push(pollResult);
         }
         return results;
@@ -121,25 +136,15 @@ export default function App() {
             <div key={index} className="vote-block">
                 Name:
                 {poll.name}
-                Lines:
-                <ol>
-                    {poll.votes.map((vote, index) => (
-
-                        <li>
-                        <dl>
-                            <dt>username</dt>
-                            <dd>{vote.username}</dd>
-
-                            <dt>email</dt>
-                            <dd>{vote.email}</dd>
-
-                            <dt>username</dt>
-                            <dd>{vote.vote}</dd>
-                        </dl>
-
-                        </li>
-                        ))}
-            </ol>
+                Results:
+                {Array.from(poll.summary.entries()).map(([vote, count]) => (
+                    <dl key={vote}>
+                        <dt>vote</dt>
+                        <dd>{vote}</dd>
+                        <dt>count</dt>
+                        <dd>{count}</dd>
+                    </dl>
+                ))}
             </div>
         ))}
         end results
