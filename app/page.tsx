@@ -169,13 +169,31 @@ export default function App() {
         return { validVotes, invalidVotes, duplicateVotes };
     }
 
+    function getCsvs(zoomPoll : string) {
+      const results = [];
+      const blocks = zoomPoll.split(/\r?\n\r?\n/);
+      for (const block of blocks) {
+          const [title, header, ...lines] = block.split(/\r?\n/);
+
+          if (lines.length > 0) {
+              results.push({
+                  title: title,
+                  csv: lines.join("\n")
+              });
+          }
+      }
+
+      return results;
+    }
+
     function parseCSV(csv: string) {
-        const blockRegex = /\d+\) (.*)\r\n(?:#.*\r\n)((?:.+\r\n)*)/gm
         const results = [];
-        let match;
-        while ((match = blockRegex.exec(csv)) !== null) {
-            const pollName = match[1];
-            const votes = match[2].split("\n")
+
+        const blocks = getCsvs(csv).slice(2);
+
+        for (const block of blocks) {
+            const pollName = block.title;
+            const votes = block.csv.split("\n")
                 .filter(line => line.trim() !== "")
                 .map(line => {
                     const [_, username, email, time, vote] = line.split(",");
