@@ -139,23 +139,23 @@ export default function App() {
         return summary;
     }
 
-    function categorizeVotes(votes: Vote[], members: Member[], aliases: Alias[]) : CategorizedVotes
-    {
-        const aliasMap = new Map(aliases.map(alias => [alias.alias, alias.vanId]));
-        const emailMap = new Map(members.map(member => [member.preferredEmail, member.vanId]));
-        const usernameMap = new Map(members.map(member => [member.name, member.vanId]));
+    // Categorize votes into valid, invalid, and duplicate, but ignore cases
+    function categorizeVotes(votes: Vote[], members: Member[], aliases: Alias[]): CategorizedVotes {
+        const aliasMap = new Map(aliases.map(alias => [alias.alias.toLowerCase(), alias.vanId]));
+        const emailMap = new Map(members.map(member => [member.preferredEmail.toLowerCase(), member.vanId]));
+        const usernameMap = new Map(members.map(member => [member.name.toLowerCase(), member.vanId]));
 
         const votedVanIds = new Set<string>();
 
-        const validVotes : Vote[] = [];
-        const invalidVotes : Vote[] = [];
-        const duplicateVotes : Vote[] = [];
+        const validVotes: Vote[] = [];
+        const invalidVotes: Vote[] = [];
+        const duplicateVotes: Vote[] = [];
 
         votes.forEach(vote => {
-            const vanId = aliasMap.get(vote.username)
-                || aliasMap.get(vote.email)
-                || emailMap.get(vote.email)
-                || usernameMap.get(vote.username);
+            const vanId = aliasMap.get(vote.username.toLowerCase())
+                || aliasMap.get(vote.email.toLowerCase())
+                || emailMap.get(vote.email.toLowerCase())
+                || usernameMap.get(vote.username.toLowerCase());
 
             if (vanId === undefined) {
                 invalidVotes.push(vote);
@@ -163,11 +163,11 @@ export default function App() {
                 duplicateVotes.push(vote);
             } else {
                 validVotes.push(vote);
+                votedVanIds.add(vanId);
             }
         });
 
         return { validVotes, invalidVotes, duplicateVotes };
-    }
 
     function getCsvs(zoomPoll : string) {
       const results = [];
