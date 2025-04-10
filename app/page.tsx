@@ -100,19 +100,10 @@ export default function App() {
     });
   }
 
-  function deleteTodo(id: string) {
-      client.models.Todo.delete({id});
-  }
-
   useEffect(() => {
     listTodos();
   }, []);
 
-  function createTodo() {
-    client.models.Todo.create({
-      content: window.prompt("Todo content"),
-    });
-  }
 
     function parseTSV(tsv: string) {
         const lines = tsv.trim().split("\n");
@@ -141,9 +132,10 @@ export default function App() {
 
     // Categorize votes into valid, invalid, and duplicate, but ignore cases
     function categorizeVotes(votes: Vote[], members: Member[], aliases: Alias[]): CategorizedVotes {
-        const aliasMap = new Map(aliases.map(alias => [alias.alias.toLowerCase(), alias.vanId]));
-        const emailMap = new Map(members.map(member => [member.preferredEmail.toLowerCase(), member.vanId]));
-        const usernameMap = new Map(members.map(member => [member.name.toLowerCase(), member.vanId]));
+        const aliasMap = new Map(aliases.map(alias => [alias.alias.toLowerCase().trim(), alias.vanId]));
+        const emailMap = new Map(members.map(member => [
+            member.preferredEmail ? member.preferredEmail.toLowerCase().trim() : null, member.vanId]));
+        const usernameMap = new Map(members.map(member => [member.name.toLowerCase().trim(), member.vanId]));
 
         const votedVanIds = new Set<string>();
 
@@ -152,10 +144,11 @@ export default function App() {
         const duplicateVotes: Vote[] = [];
 
         votes.forEach(vote => {
-            const vanId = aliasMap.get(vote.username.toLowerCase())
-                || aliasMap.get(vote.email.toLowerCase())
-                || emailMap.get(vote.email.toLowerCase())
-                || usernameMap.get(vote.username.toLowerCase());
+
+            const vanId = aliasMap.get(vote.username.toLowerCase().trim())
+                || aliasMap.get(vote.email.toLowerCase().trim())
+                || emailMap.get(vote.email.toLowerCase().trim())
+                || usernameMap.get(vote.username.toLowerCase().trim());
 
             if (vanId === undefined) {
                 invalidVotes.push(vote);
@@ -199,7 +192,8 @@ export default function App() {
                 .map(line => {
                     const [_, username, email, time, vote] = line.split(",");
                     return { username, email, time, choice: vote } as Vote;
-                });
+                })
+                .filter(vote => vote.username && vote.email && vote.time && vote.choice);
 
             const categorizedVotes = categorizeVotes(votes, memberData, []);
             const summary = summarizeVotes(categorizedVotes.validVotes);
