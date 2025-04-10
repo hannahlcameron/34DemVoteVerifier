@@ -167,7 +167,8 @@ export default function App() {
             }
         });
 
-        return { validVotes, invalidVotes, duplicateVotes };
+        return {validVotes, invalidVotes, duplicateVotes};
+    }
 
     function getCsvs(zoomPoll : string) {
       const results = [];
