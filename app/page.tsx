@@ -79,30 +79,32 @@ export default function App() {
         hasData={memberData.length > 0}
       />
 
-      {activeTab === "members" && (
-        <MembersTab
-          memberData={memberData}
-          onMembersUpload={handleMembersFileUpload}
-        />
-      )}
+      <div className={styles.tableWrapper}>
+        {activeTab === "members" && (
+          <MembersTab
+            memberData={memberData}
+            onMembersUpload={handleMembersFileUpload}
+          />
+        )}
 
-      {activeTab === "polls" && (
-        <PollsTab
-          pollResults={pollResults}
-          onPollUpload={handlePollFileUpload}
-          hasMemberData={memberData.length > 0}
-          onCreateAlias={openAliasModal}
-        />
-      )}
+        {activeTab === "polls" && (
+          <PollsTab
+            pollResults={pollResults}
+            onPollUpload={handlePollFileUpload}
+            hasMemberData={memberData.length > 0}
+            onCreateAlias={openAliasModal}
+          />
+        )}
 
-      {activeTab === "aliases" && (
-        <AliasesTab
-          aliases={aliases}
-          memberData={memberData}
-          onCreateAlias={createAlias}
-          onResetAliases={resetAliases}
-        />
-      )}
+        {activeTab === "aliases" && (
+          <AliasesTab
+            aliases={aliases}
+            memberData={memberData}
+            onCreateAlias={createAlias}
+            onResetAliases={resetAliases}
+          />
+        )}
+      </div>
     </main>
   );
 }
