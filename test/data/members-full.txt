@@ -1,0 +1,26 @@
+VANID	Last	First	Mid	Suf	PreferredEmail
+987654321	Clinton	Hillary	R		hrc2024@democracy.org
+987654322	Obama	Michelle	L		mobama@progress.net
+987654323	Merkel	Angela	D		amerkel@eu-politics.com
+987654324	Gandhi	Indira			igandhi@congress.org
+987654325	Thatcher	Margaret	H		mthatcher@parliament.uk
+987654326	Roosevelt	Eleanor			eleanor@newdeal.org
+987654327	Mandela	Nelson	R		nmandela@freedom.org
+987654328	King	Martin	L	Jr	mlk@civilrights.org
+987654329	Kennedy	Robert	F		rfk@justice.gov
+987654330	Lincoln	Abraham			honest.abe@union.org
+987654331	Sanders	Bernard			bernie@progressive.org
+987654332	Warren	Elizabeth	A		ewarren@senate.org
+987654333	Harris	Kamala	D		kharris@california.gov
+987654334	Pelosi	Nancy			nancy@house.gov
+987654335	Gore	Albert			agore@climate.org
+987654336	Biden	Joseph	R		joe@whitehouse.gov
+987654337	Castro	Julian			jcastro@texas.org
+987654338	Klobuchar	Amy			amy@midwest.gov
+987654339	Buttigieg	Pete			pete@transport.gov
+987654340	Ocasio	Alexandria	C		aoc@greennewdeal.org
+987654341	Abrams	Stacey			stacey@fairfight.org
+987654342	O'Rourke	Beto			beto@texas.org
+987654343	Booker	Cory			cory@newjersey.gov
+987654344	Duckworth	Tammy			tammy@illinois.gov
+987654345	Whitmer	Gretchen			gov@michigan.org

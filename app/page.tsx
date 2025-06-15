@@ -1,26 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { generateClient } from "aws-amplify/data";
-import type { Schema } from "@/amplify/data/resource";
-import { Amplify } from "aws-amplify";
-import outputs from "@/amplify_outputs.json";
-import "@aws-amplify/ui-react/styles.css";
 import "./globals.css";
 import { MaterialReactTable } from "material-react-table";
 import Modal from "react-modal";
 import Cookies from 'js-cookie';
 
-Amplify.configure(outputs);
 
-const client = generateClient<Schema>();
-
-type Vote = {
-    username: string,
-    email: string,
-    time:string,
-    choice: string
-};
+import { 
+  type Member,
+  type Vote,
+  type ValidationResult,
+  parseMemberList,
+  parseVoteData,
+  validateVotes,
+  addAlias as addVoteAlias,
+  getDuplicateVotes
+} from './vote-verification';
 
 type CategorizedVotes = {
     validVotes: Vote[];
@@ -36,12 +32,6 @@ type PollResult = {
     choiceToVotes: Map<string, number>;
 };
 
-type Member = {
-    vanId: string;
-    name: string;
-    preferredEmail: string;
-}
-
 type Alias = {
     vanId: string;
     alias: string;
@@ -50,7 +40,6 @@ type Alias = {
 type TabType = "members" | "polls" | "aliases";
 
 export default function App() {
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
   const [memberData, setMemberData] = useState<Member[]>([]);
   const [pollResults, setPollResults] = useState<PollResult[]>([]);
   const [aliasInput, setAliasInput] = useState<string>("");
@@ -85,10 +74,23 @@ export default function App() {
           setAliasInput("");
           setSelectedMember(null);
 
+          // Add alias to vote verification system
+          addVoteAlias(selectedMember.vanId, prefilledAlias);
+
           // Re-categorize votes
           const updatedPollResults = pollResults.map(poll => {
-              const categorizedVotes = categorizeVotes(poll.votes, memberData, updatedAliases);
-              return { ...poll, categorizedVotes, choiceToVotes: summarizeVotes(categorizedVotes.validVotes) };
+              const validationResult = validateVotes(poll.votes, memberData);
+              const duplicates = getDuplicateVotes(validationResult);
+              const categorizedVotes = {
+                  validVotes: validationResult.valid,
+                  invalidVotes: validationResult.invalid,
+                  duplicateVotes: duplicates
+              };
+              return {
+                  ...poll,
+                  categorizedVotes,
+                  choiceToVotes: summarizeVotes(categorizedVotes.validVotes)
+              };
           });
 
           setPollResults(updatedPollResults);
@@ -96,11 +98,6 @@ export default function App() {
       }
   }
 
-  function listTodos() {
-    client.models.Todo.observeQuery().subscribe({
-      next: (data) => setTodos([...data.items]),
-    });
-  }
 
   // Load aliases from cookies on initial load
   useEffect(() => {
@@ -113,7 +110,6 @@ export default function App() {
         console.error('Error parsing aliases from cookies:', e);
       }
     }
-    listTodos();
   }, []);
 
   // Save aliases to cookies whenever they change
@@ -121,7 +117,7 @@ export default function App() {
     Cookies.set('aliases', JSON.stringify(aliases), { expires: 365 }); // Expires in 1 year
   }, [aliases]);
 
-  function parseTSV(tsv: string): Member[] | { error: string } {
+  function validateAndParseMemberList(tsv: string): Member[] | { error: string } {
       const lines = tsv.trim().split("\n");
       if (lines.length < 2) {
           return { error: "File must contain at least a header line and one data line" };
@@ -143,16 +139,7 @@ export default function App() {
           }
       }
 
-      // If validation passed, process the data
-      const data = lines.slice(1).map(line => {
-          const values = line.split("\t");
-          return {
-              vanId: values[0].trim(),
-              name: values[1] ? values[1].trim() : "",
-              preferredEmail: values[2] ? values[2].trim() : ""
-          } as Member;
-      });
-      return data;
+      return parseMemberList(tsv);
   }
 
   function summarizeVotes(votes : Vote[]) {
@@ -166,248 +153,7 @@ export default function App() {
       return summary;
   }
 
-  function categorizeVotes(votes: Vote[], members: Member[], aliases: Alias[]): CategorizedVotes {
-      const aliasMap = new Map(aliases.map(alias => [alias.alias.toLowerCase().trim(), alias.vanId]));
-      const emailMap = new Map(members
-          .filter(member => member.preferredEmail)
-          .map(member => [member.preferredEmail.toLowerCase().trim(), member.vanId]));
-      const usernameMap = new Map(members
-          .filter(member => member.name)
-          .map(member => {
-              const nameParts = member.name.toLowerCase().trim().split(/\s+/);
-              if (nameParts.length === 1) {
-                  return [nameParts[0], member.vanId];
-              }
-              const firstName = nameParts[0];
-              const lastName = nameParts[nameParts.length - 1];
-              return [`${firstName} ${lastName}`, member.vanId];
-          }));
 
-      const votedVanIds = new Set<string>();
-
-      const validVotes: Vote[] = [];
-      const invalidVotes: Vote[] = [];
-      const duplicateVotes: Vote[] = [];
-
-      votes.forEach(vote => {
-          const usernameParts = vote.username.toLowerCase().trim().split(/\s+/);
-          const lowerUsername = usernameParts.length === 1 ? 
-              usernameParts[0] : 
-              `${usernameParts[0]} ${usernameParts[usernameParts.length - 1]}`;
-          const lowerEmail = vote.email.toLowerCase().trim();
-
-          const vanId = aliasMap.get(lowerUsername)
-              || aliasMap.get(lowerEmail)
-              || (lowerEmail && emailMap.get(lowerEmail))
-              || (lowerUsername && usernameMap.get(lowerUsername));
-
-          if (vanId === undefined) {
-              invalidVotes.push(vote);
-          } else if (votedVanIds.has(vanId)) {
-              duplicateVotes.push(vote);
-          } else {
-              validVotes.push(vote);
-              votedVanIds.add(vanId);
-          }
-      });
-
-      return {validVotes, invalidVotes, duplicateVotes};
-  }
-
-  function findVoteBlock(lines: string[]): { title: string, headerIndex: number, question: string } | null {
-      let pollTitle = "";
-      let headerIndex = -1;
-
-      for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (line === "Overview" || line === "Launched Polls" || line.startsWith("#,Poll Name")) {
-              continue;
-          }
-
-          if (line.startsWith("#,User Name,Email Address,Submitted Date and Time,")) {
-              headerIndex = i;
-              for (let j = i - 1; j >= 0; j--) {
-                  const titleLine = lines[j].trim();
-                  if (titleLine && !titleLine.startsWith("#") && 
-                      titleLine !== "Overview" && titleLine !== "Launched Polls") {
-                      pollTitle = titleLine.split(",")[0].trim();
-                      break;
-                  }
-              }
-              if (pollTitle) {
-                  break;
-              }
-          }
-      }
-
-      if (!pollTitle || headerIndex === -1) {
-          return null;
-      }
-
-      // Extract the question from the header line
-      const headerLine = lines[headerIndex];
-      const lastCommaIndex = headerLine.lastIndexOf(',');
-      const question = lastCommaIndex !== -1 ? 
-          headerLine.slice(lastCommaIndex + 1).trim().replace(/^"|"$/g, '').trim() : 
-          '';
-
-      return {
-          title: pollTitle,
-          headerIndex: headerIndex,
-          question: question
-      };
-  }
-
-  function parseCSV(csv: string): PollResult[] | { error: string } {
-      if (!csv.trim()) {
-          return { error: "The input file is empty" };
-      }
-
-      const blocks = csv.split(/\r?\n\r?\n/);
-      const results = [];
-
-      for (const block of blocks) {
-          const lines = block.split(/\r?\n/);
-          const voteBlock = findVoteBlock(lines);
-          
-          if (!voteBlock) continue;
-
-          const { title: pollName, headerIndex, question } = voteBlock;
-          const voteLines = lines.slice(headerIndex + 1);
-          
-          if (voteLines.length === 0) {
-              return { error: `No votes found in poll "${pollName}"` };
-          }
-
-          const votes = voteLines
-              .filter(line => line.trim() !== "")
-              .map((line, idx) => {
-                  if (idx === 0) {
-                      return null;
-                  }
-
-                  const fields: string[] = [];
-                  let field = '';
-                  let inQuotes = false;
-                  let allContent = [line];
-                  let currentLineIdx = idx;
-                  let currentLine = line;
-                  let startLine = headerIndex + idx + 2;
-                  
-                  while (true) {
-                      for (let i = 0; i < currentLine.length; i++) {
-                          const char = currentLine[i];
-                          if (char === '"') {
-                              if (inQuotes) {
-                                  if (i + 1 < currentLine.length && currentLine[i + 1] === '"') {
-                                      field += '"';
-                                      i++;
-                                  } else {
-                                      inQuotes = false;
-                                      while (i + 1 < currentLine.length && currentLine[i + 1] !== ',') {
-                                          i++;
-                                      }
-                                  }
-                              } else {
-                                  inQuotes = true;
-                              }
-                          } else if (char === ',' && !inQuotes) {
-                              fields.push(field.trim());
-                              field = '';
-                          } else {
-                              field += char;
-                          }
-                      }
-                      
-                      if (inQuotes && currentLineIdx + 1 < voteLines.length) {
-                          currentLineIdx++;
-                          currentLine = voteLines[currentLineIdx];
-                          allContent.push(currentLine);
-                          field += '\n';
-                      } else {
-                          fields.push(field.trim());
-                          break;
-                      }
-                  }
-                  
-                  const fullContent = allContent.join('\n');
-                  const lineRange = allContent.length > 1 ? 
-                      `Lines ${startLine}-${startLine + allContent.length - 1}` : 
-                      `Line ${startLine}`;
-                  
-                  if (fields.length < 5) {
-                      return { error: `${lineRange} has invalid format:\n` +
-                                    `"${fullContent}"\n\n` +
-                                    `Expected 5 fields (number, name, email, time, vote) but got ${fields.length} fields.` };
-                  }
-
-                  const cleanFields = fields.map(f => {
-                      let cleaned = f.trim();
-                      if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
-                          cleaned = cleaned.slice(1, -1);
-                      }
-                      return cleaned.replace(/""/g, '"');
-                  });
-
-                  const [voteNum, username, email, time, vote] = cleanFields;
-                  
-                  const parsedVoteNum = parseInt(voteNum);
-                  if (isNaN(parsedVoteNum)) {
-                      return { error: `${lineRange} has invalid vote number:\n` +
-                                    `"${fullContent}"\n\n` +
-                                    `Vote number "${voteNum}" is not a valid number` };
-                  }
-
-                  if (!username || !email || !time || !vote) {
-                      const missing = [];
-                      if (!username) missing.push("name");
-                      if (!email) missing.push("email");
-                      if (!time) missing.push("time");
-                      if (!vote) missing.push("choice");
-                      return { error: `Vote ${voteNum} (${lineRange}) is missing required data:\n` +
-                                    `"${fullContent}"\n\n` +
-                                    `Missing fields: ${missing.join(", ")}` };
-                  }
-
-                  return { 
-                      username: username.trim(), 
-                      email: email.trim(), 
-                      time: time.trim(), 
-                      choice: vote.trim() 
-                  } as Vote;
-              });
-
-          const nonNullVotes = votes.filter((v): v is (Vote | { error: string }) => v !== null);
-          const error = nonNullVotes.find(v => 'error' in v);
-          if (error) {
-              return error;
-          }
-
-          const validVotes = nonNullVotes.filter((v): v is Vote => !('error' in v));
-          if (validVotes.length === 0) {
-              return { error: `No valid votes found in poll "${pollName}". Please check the data format.` };
-          }
-
-          const categorizedVotes = categorizeVotes(validVotes, memberData, []);
-          const summary = summarizeVotes(categorizedVotes.validVotes);
-
-          const pollResult: PollResult = {
-              name: pollName,
-              question: question,
-              votes: validVotes,
-              categorizedVotes: categorizedVotes,
-              choiceToVotes: summary
-          };
-
-          results.push(pollResult);
-      }
-
-      if (results.length === 0) {
-          return { error: "No poll data found in the file. The file should contain poll results with a header row starting with '#'" };
-      }
-
-      return results;
-  }
 
   function handleMembersUpload(event: React.ChangeEvent<HTMLInputElement>) {
       const file = event.target.files?.[0];
@@ -415,7 +161,7 @@ export default function App() {
           const reader = new FileReader();
           reader.onload = (e) => {
               const tsv = e.target?.result as string;
-              const result = parseTSV(tsv);
+              const result = validateAndParseMemberList(tsv);
               
               if ('error' in result) {
                   alert(result.error);
@@ -426,7 +172,13 @@ export default function App() {
               
               if (pollResults.length > 0) {
                   const updatedPollResults = pollResults.map(poll => {
-                      const categorizedVotes = categorizeVotes(poll.votes, result, aliases);
+                      const validationResult = validateVotes(poll.votes, result);
+                      const duplicates = getDuplicateVotes(validationResult);
+                      const categorizedVotes = {
+                          validVotes: validationResult.valid,
+                          invalidVotes: validationResult.invalid,
+                          duplicateVotes: duplicates
+                      };
                       return {
                           ...poll,
                           categorizedVotes,
@@ -449,14 +201,27 @@ export default function App() {
           const reader = new FileReader();
           reader.onload = (e) => {
               const csv = e.target?.result as string;
-              const result = parseCSV(csv);
-              
-              if ('error' in result) {
-                  alert(result.error);
-                  return;
+              try {
+                  const votes = parseVoteData(csv);
+                  const validationResult = validateVotes(votes, memberData);
+                  const duplicates = getDuplicateVotes(validationResult);
+                  
+                  const categorizedVotes = {
+                      validVotes: validationResult.valid,
+                      invalidVotes: validationResult.invalid,
+                      duplicateVotes: duplicates
+                  };
+
+                  setPollResults([{
+                      name: "Vote Results",
+                      question: "",
+                      votes: votes,
+                      categorizedVotes,
+                      choiceToVotes: summarizeVotes(categorizedVotes.validVotes)
+                  }]);
+              } catch (error) {
+                  alert(error instanceof Error ? error.message : 'Failed to parse vote data');
               }
-              
-              setPollResults(result);
           };
           reader.readAsText(file);
       }
@@ -481,9 +246,22 @@ export default function App() {
           setAliasInput("");
           setSelectedMember(null);
 
+          // Add alias to vote verification system
+          addVoteAlias(selectedMember.vanId, aliasInput);
+
           const updatedPollResults = pollResults.map(poll => {
-              const categorizedVotes = categorizeVotes(poll.votes, memberData, updatedAliases);
-              return { ...poll, categorizedVotes, choiceToVotes: summarizeVotes(categorizedVotes.validVotes) };
+              const validationResult = validateVotes(poll.votes, memberData);
+              const duplicates = getDuplicateVotes(validationResult);
+              const categorizedVotes = {
+                  validVotes: validationResult.valid,
+                  invalidVotes: validationResult.invalid,
+                  duplicateVotes: duplicates
+              };
+              return {
+                  ...poll,
+                  categorizedVotes,
+                  choiceToVotes: summarizeVotes(categorizedVotes.validVotes)
+              };
           });
 
           setPollResults(updatedPollResults);
@@ -505,7 +283,13 @@ export default function App() {
     Cookies.remove('aliases');
     // Re-categorize votes with empty aliases
     const updatedPollResults = pollResults.map(poll => {
-      const categorizedVotes = categorizeVotes(poll.votes, memberData, []);
+      const validationResult = validateVotes(poll.votes, memberData);
+      const duplicates = getDuplicateVotes(validationResult);
+      const categorizedVotes = {
+          validVotes: validationResult.valid,
+          invalidVotes: validationResult.invalid,
+          duplicateVotes: duplicates
+      };
       return { ...poll, categorizedVotes, choiceToVotes: summarizeVotes(categorizedVotes.validVotes) };
     });
     setPollResults(updatedPollResults);
