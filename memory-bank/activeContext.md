@@ -1,125 +1,132 @@
 # Active Context
 
-## Current Focus
-The project is actively working on vote verification functionality with a focus on:
-1. Processing Attorney General ballot data
-2. Handling membership verification
-3. Managing aliases for vote validation
-4. Dealing with various data formats and whitespace issues
-
 ## Recent Changes
 
-### Data Processing
-- Implemented TSV parsing for member lists
-- Added CSV parsing for poll data
-- Enhanced whitespace handling
-- Added support for multi-line entries in CSV
+### Major Refactoring (June 14, 2025)
+- Completely restructured the application into modular components
+- Implemented CSS modules for better style management
+- Created custom hooks for state management
+- Improved error handling and type safety
 
-### Vote Verification
-- Developed vote matching algorithm
-- Added alias system with cookie persistence
-- Implemented duplicate vote detection
-- Added invalid vote identification
+### Current Component Structure
+- TabNavigation: Main navigation and tab management
+- MembersTab: Member data management
+- PollsTab: Vote processing and display
+- AliasesTab: Alias management
+- VoteSummary: Vote statistics visualization
+- AliasModal: Alias creation interface
 
-### UI Improvements
-- Added tabbed interface for workflow organization
-- Implemented search functionality for member selection
-- Added modal system for alias creation
-- Enhanced vote summary visualizations
+### Active Patterns
+1. Component Organization
+   - Each component has a single responsibility
+   - Clear separation between UI and logic
+   - Consistent prop interfaces
+   - Modular CSS styling
 
-## Active Test Data
-- Attorney General ballot data (attorney-general-b1.csv)
-- Membership list data (membership-list.txt)
-- Vote verification data (VoteVerificationtxt20250601-2597953977.txt)
-- Test files:
-  - test-data.csv
-  - test-members.txt
-- Member name/email data (membernameemail20250213-13252716154.txt)
+2. State Management
+   - useVoteProcessing hook for vote-related state
+   - useAliases hook for alias management
+   - Centralized error handling
+   - Efficient state updates
 
-## Current Patterns & Preferences
+3. Styling Approach
+   - Component-specific CSS modules
+   - Consistent naming conventions
+   - Responsive design patterns
+   - Reusable style variables
 
-### Data Handling
-- Strict validation of input files
-- Comprehensive error messaging
-- Support for various name formats
-- Flexible email matching
+## Current Focus
+- Maintaining clean component boundaries
+- Ensuring type safety across components
+- Optimizing state updates
+- Improving error handling
+- Maintaining consistent styling
 
-### UI/UX
-- Progressive disclosure of information
-- Clear workflow steps
-- Persistent state management
-- Responsive feedback
+## Recent Learnings
+1. Component Design
+   - Breaking down large components improves maintainability
+   - Custom hooks help separate concerns
+   - CSS modules prevent style conflicts
+   - Type safety catches errors early
 
-## Key Learnings
+2. State Management
+   - Centralized state management simplifies updates
+   - Custom hooks improve code reuse
+   - Careful state updates prevent unnecessary rerenders
+   - Clear state flow improves debugging
 
-### Data Format Challenges
-- Handling inconsistent whitespace
-- Managing multi-line CSV entries
-- Dealing with varied name formats
-- Email format variations
-
-### Vote Verification Insights
-- Multiple matching strategies needed
-- Importance of alias system
-- Duplicate vote patterns
-- Common validation issues
+3. Error Handling
+   - Consistent error message format
+   - User-friendly error displays
+   - Proper error propagation
+   - Type-safe error handling
 
 ## Next Steps
+1. Testing
+   - Add unit tests for components
+   - Test error handling paths
+   - Verify state management
+   - Test component interactions
 
-### Short Term
-1. Enhance error handling for edge cases
-2. Improve performance for large datasets
-3. Add more detailed vote statistics
-4. Enhance alias management UI
+2. Performance
+   - Monitor component rerenders
+   - Optimize state updates
+   - Improve load times
+   - Reduce bundle size
 
-### Medium Term
-1. Add batch processing capabilities
-2. Implement export functionality
-3. Add detailed audit logging
-4. Enhance search capabilities
-
-### Long Term
-1. Add support for more ballot types
-2. Implement advanced analytics
-3. Add automated testing
-4. Consider caching improvements
+3. Documentation
+   - Update component documentation
+   - Document state management patterns
+   - Maintain style guide
+   - Document error handling
 
 ## Active Decisions
+1. Component Structure
+   - Keep components focused and small
+   - Use TypeScript for type safety
+   - Maintain clear component interfaces
+   - Follow consistent naming patterns
 
-### Architecture
-- Using cookies for alias persistence
-- Client-side vote processing
-- React hooks for state management
-- Material table for data display
+2. State Management
+   - Use custom hooks for related state
+   - Keep state updates efficient
+   - Maintain clear state flow
+   - Handle errors gracefully
 
-### Data Processing
-- Strict input validation
-- Multiple matching methods
-- Comprehensive error reporting
-- Progressive data loading
+3. Styling
+   - Use CSS modules for component styles
+   - Maintain consistent naming
+   - Follow responsive design patterns
+   - Use design system variables
 
-## Current Issues & Considerations
+## Current Challenges
+1. Technical
+   - Ensuring efficient state updates
+   - Maintaining type safety
+   - Managing component complexity
+   - Optimizing performance
 
-### Performance
-- Large dataset handling
-- Search optimization
-- UI responsiveness
-- State management efficiency
+2. Process
+   - Maintaining code consistency
+   - Documenting changes
+   - Testing coverage
+   - Code review process
 
-### Data Quality
-- Whitespace handling
-- Name format standardization
-- Email validation
-- Duplicate detection
+## Project Insights
+1. Architecture
+   - Component-based structure works well
+   - Custom hooks improve maintainability
+   - CSS modules prevent style conflicts
+   - Clear state management is crucial
 
-### User Experience
-- Error message clarity
-- Workflow optimization
-- Search functionality
-- Result visualization
+2. Development
+   - TypeScript catches errors early
+   - Modular components are easier to maintain
+   - Clear patterns improve development speed
+   - Good documentation is essential
 
-## Development Environment
-- Next.js local development server
-- AWS Amplify backend
-- TypeScript compilation
-- Git version control
+3. Future Considerations
+   - Component library potential
+   - Performance optimization opportunities
+   - Testing strategy improvements
+   - Documentation updates

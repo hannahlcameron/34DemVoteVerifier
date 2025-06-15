@@ -1,0 +1,35 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.uploadSection {
+  margin-bottom: 20px;
+}
+
+.fileInput {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  width: 100%;
+  max-width: 400px;
+}
+
+.fileInput:hover {
+  border-color: var(--primary-blue);
+}
+
+.fileInput:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* Style for disabled state */
+.fileInput:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+  opacity: 0.7;
+}

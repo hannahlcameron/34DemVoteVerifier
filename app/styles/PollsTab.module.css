@@ -1,0 +1,121 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.uploadSection {
+  margin-bottom: 20px;
+}
+
+.fileInput {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  width: 100%;
+  max-width: 400px;
+}
+
+.fileInput:hover:not(:disabled) {
+  border-color: var(--primary-blue);
+}
+
+.fileInput:disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.warning {
+  color: #dc3545;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.pollContainer {
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background-color: white;
+}
+
+.voteListSection {
+  margin-top: 20px;
+}
+
+.toggleButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--primary-blue);
+  background-color: #f8f9fa;
+  color: #333;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  margin-bottom: 10px;
+}
+
+.toggleButton.active {
+  background-color: var(--primary-blue);
+  color: white;
+}
+
+.count {
+  background-color: var(--primary-blue);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.9em;
+  min-width: 24px;
+  text-align: center;
+}
+
+.toggleButton.active .count {
+  background-color: white;
+  color: var(--primary-blue);
+}
+
+.arrow {
+  font-size: 0.8em;
+  transition: transform 0.2s ease;
+}
+
+.arrow.up {
+  transform: rotate(180deg);
+}
+
+.createAliasButton {
+  padding: 4px 8px;
+  background-color: var(--primary-blue);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.createAliasButton:hover {
+  opacity: 0.9;
+}
+
+/* MaterialReactTable customizations */
+.voteListSection :global(.MuiPaper-root) {
+  box-shadow: none;
+  border: 1px solid #e9ecef;
+  margin-top: 10px;
+}
+
+.voteListSection :global(.MuiTableRow-root:hover) {
+  background-color: #f8f9fa;
+}
+
+.voteListSection :global(.MuiTableCell-head) {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}

@@ -1,0 +1,72 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: flex-start;
+}
+
+.addButton {
+  padding: 8px 16px;
+  background-color: var(--primary-blue);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.addButton:hover {
+  opacity: 0.9;
+}
+
+.resetButton {
+  padding: 8px 16px;
+  background-color: var(--button-orange);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.resetButton:hover {
+  opacity: 0.9;
+}
+
+.noAliases {
+  color: #666;
+  text-align: center;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+/* MaterialReactTable customizations */
+.container :global(.MuiPaper-root) {
+  box-shadow: none;
+  border: 1px solid #e9ecef;
+}
+
+.container :global(.MuiTableRow-root:hover) {
+  background-color: #f8f9fa;
+}
+
+.container :global(.MuiTableCell-head) {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}

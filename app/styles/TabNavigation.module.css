@@ -1,0 +1,79 @@
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--primary-blue);
+  padding-bottom: 10px;
+  background-color: white;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  margin-bottom: 20px;
+}
+
+.tabGroup {
+  display: flex;
+  gap: 10px;
+}
+
+.tabButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  background-color: #f8f9fa;
+  color: #333;
+  transition: all 0.2s ease;
+}
+
+.tabButton.active {
+  background-color: var(--primary-blue);
+  color: white;
+}
+
+.tabContent {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tabIcon {
+  font-size: 16px;
+}
+
+.tabCount {
+  background-color: var(--primary-blue);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+}
+
+.tabCount.activeCount {
+  background-color: white;
+  color: var(--primary-blue);
+}
+
+.resetButton {
+  background-color: var(--button-orange);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.resetButton:hover {
+  opacity: 0.9;
+}
+
+.resetButton.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

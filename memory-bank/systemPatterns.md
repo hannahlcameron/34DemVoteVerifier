@@ -4,9 +4,10 @@
 
 ### Frontend Architecture
 - Next.js application with React Server Components
-- Client-side state management using React hooks
+- Component-based architecture with clear separation of concerns
+- Custom hooks for state management
+- CSS modules for styling
 - Material React Table for data display
-- Modal system for user interactions
 - Persistent storage using cookies for aliases
 
 ### Backend Architecture
@@ -15,9 +16,101 @@
 - Data storage using AWS AppSync/DynamoDB
 - File processing system for CSV/TSV data
 
-## Core Design Patterns
+## Component Structure
 
-### Data Processing Pipeline
+### Core Components
+```mermaid
+flowchart TD
+    App[App Component] --> TN[TabNavigation]
+    App --> MT[MembersTab]
+    App --> PT[PollsTab]
+    App --> AT[AliasesTab]
+    PT --> VS[VoteSummary]
+    AT --> AM[AliasModal]
+```
+
+### Component Responsibilities
+1. TabNavigation
+   - Manages tab switching
+   - Displays counts for members/polls/aliases
+   - Handles reset functionality
+
+2. MembersTab
+   - Member data file upload
+   - Member list display
+   - Data validation
+
+3. PollsTab
+   - Poll data file upload
+   - Vote summary display
+   - Invalid/duplicate vote management
+   - Integration with alias creation
+
+4. AliasesTab
+   - Alias management interface
+   - Alias creation and listing
+   - Reset functionality
+
+5. VoteSummary
+   - Vote statistics visualization
+   - Chart display
+   - Vote count summaries
+
+6. AliasModal
+   - Alias creation interface
+   - Member search and selection
+   - Form validation
+
+## State Management
+
+### Custom Hooks
+1. useVoteProcessing
+   - Member data state
+   - Poll results state
+   - Vote processing logic
+   - File upload handling
+
+2. useAliases
+   - Alias state management
+   - Cookie persistence
+   - Modal state
+   - Alias creation logic
+
+### State Flow
+```mermaid
+flowchart TD
+    VH[Vote Hook] --> VS[Vote State]
+    VS --> VV[Vote Validation]
+    VV --> VD[Vote Display]
+    
+    AH[Alias Hook] --> AS[Alias State]
+    AS --> AP[Alias Persistence]
+    AS --> VV
+```
+
+## Styling Architecture
+
+### CSS Module Structure
+- Component-specific CSS modules
+- Global styles in globals.css
+- Consistent naming conventions
+- Responsive design patterns
+
+### Style Organization
+```
+app/
+├── styles/
+│   ├── page.module.css
+│   ├── TabNavigation.module.css
+│   ├── MembersTab.module.css
+│   ├── PollsTab.module.css
+│   ├── AliasesTab.module.css
+│   ├── VoteSummary.module.css
+│   └── AliasModal.module.css
+└── globals.css
+```
+
+## Data Processing Pipeline
 ```mermaid
 flowchart TD
     Upload[File Upload] --> Parse[Parse Data]
@@ -27,7 +120,7 @@ flowchart TD
     Categorize --> Display[Display Results]
 ```
 
-### Vote Verification Flow
+## Vote Verification Flow
 ```mermaid
 flowchart TD
     ML[Member List] --> VM[Vote Matching]
@@ -36,30 +129,6 @@ flowchart TD
     VM --> Valid[Valid Votes]
     VM --> Invalid[Invalid Votes]
     VM --> Duplicate[Duplicate Votes]
-```
-
-### State Management
-- Centralized state for:
-  - Member data
-  - Poll results
-  - Aliases
-  - UI state (active tab, modals)
-- State updates trigger re-categorization of votes
-
-### Component Organization
-```mermaid
-flowchart TD
-    App[App Component] --> Tabs[Tab System]
-    Tabs --> Members[Members Tab]
-    Tabs --> Polls[Polls Tab]
-    Tabs --> Aliases[Aliases Tab]
-    Members --> Table1[Material Table]
-    Polls --> Results[Poll Results]
-    Results --> Summary[Vote Summary]
-    Results --> Invalid[Invalid Votes]
-    Results --> Duplicate[Duplicate Votes]
-    Aliases --> AliasForm[Alias Form]
-    Aliases --> Table2[Alias Table]
 ```
 
 ## Key Implementation Patterns
@@ -116,7 +185,20 @@ flowchart TD
 ```
 /
 ├── app/
-│   ├── page.tsx (main application)
+│   ├── components/
+│   │   ├── TabNavigation.tsx
+│   │   ├── MembersTab.tsx
+│   │   ├── PollsTab.tsx
+│   │   ├── AliasesTab.tsx
+│   │   ├── VoteSummary.tsx
+│   │   └── AliasModal.tsx
+│   ├── hooks/
+│   │   ├── useVoteProcessing.ts
+│   │   └── useAliases.ts
+│   ├── styles/
+│   │   ├── [Component].module.css
+│   │   └── page.module.css
+│   ├── page.tsx
 │   ├── layout.tsx
 │   └── globals.css
 ├── amplify/

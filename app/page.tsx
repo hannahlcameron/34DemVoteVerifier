@@ -1,942 +1,108 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import "./globals.css";
-import { MaterialReactTable } from "material-react-table";
-import Modal from "react-modal";
-import Cookies from 'js-cookie';
-
-
-import { 
-  type Member,
-  type Vote,
-  type ValidationResult,
-  parseMemberList,
-  parseVoteData,
-  validateVotes,
-  addAlias as addVoteAlias,
-  getDuplicateVotes
-} from './vote-verification';
-
-type CategorizedVotes = {
-    validVotes: Vote[];
-    invalidVotes: Vote[];
-    duplicateVotes: Vote[];
-}
-
-type PollResult = {
-    name: string;
-    question: string;
-    votes: Vote[];
-    categorizedVotes : CategorizedVotes;
-    choiceToVotes: Map<string, number>;
-};
-
-type Alias = {
-    vanId: string;
-    alias: string;
-};
+import { useState } from "react";
+import styles from "./styles/page.module.css";
+import { TabNavigation } from "./components/TabNavigation";
+import { MembersTab } from "./components/MembersTab";
+import { PollsTab } from "./components/PollsTab";
+import { AliasesTab } from "./components/AliasesTab";
+import { useVoteProcessing } from "./hooks/useVoteProcessing";
+import { useAliases } from "./hooks/useAliases";
 
 type TabType = "members" | "polls" | "aliases";
 
 export default function App() {
-  const [memberData, setMemberData] = useState<Member[]>([]);
-  const [pollResults, setPollResults] = useState<PollResult[]>([]);
-  const [aliasInput, setAliasInput] = useState<string>("");
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [aliases, setAliases] = useState<Alias[]>([]);
-  const [memberSearch, setMemberSearch] = useState<string>("");
-  const [modalMemberSearch, setModalMemberSearch] = useState<string>("");
   const [activeTab, setActiveTab] = useState<TabType>("members");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [prefilledAlias, setPrefilledAlias] = useState<string>("");
-  const [expandedVotes, setExpandedVotes] = useState<{[key: string]: {invalid: boolean, duplicate: boolean}}>({});
+  const { 
+    memberData, 
+    pollResults, 
+    handleMembersUpload, 
+    handlePollUpload,
+    resetData 
+  } = useVoteProcessing();
 
-  // Function to open the modal with the pre-filled alias
-  function openAliasModal(username: string) {
-      setPrefilledAlias(username);
-      setIsModalOpen(true);
-  }
+  const {
+    aliases,
+    isModalOpen,
+    prefilledAlias,
+    createAlias,
+    resetAliases,
+    openAliasModal,
+    closeAliasModal
+  } = useAliases(() => {
+    // Re-validate votes when aliases change
+    if (pollResults.length > 0) {
+      const currentVotes = pollResults[0].votes;
+      handlePollUpload(currentVotes).catch(error => {
+        console.error('Failed to revalidate votes:', error);
+      });
+    }
+  });
 
-  // Function to close the modal
-  function closeAliasModal() {
-      setIsModalOpen(false);
-      setPrefilledAlias("");
-  }
-
-  // Function to create alias from modal
-  function createAliasFromModal() {
-      if (selectedMember && prefilledAlias) {
-          const newAlias: Alias = { vanId: selectedMember.vanId, alias: prefilledAlias };
-          const updatedAliases = [...aliases, newAlias];
-
-          setAliases(updatedAliases);
-          setAliasInput("");
-          setSelectedMember(null);
-
-          // Add alias to vote verification system
-          addVoteAlias(selectedMember.vanId, prefilledAlias);
-
-          // Re-categorize votes
-          const updatedPollResults = pollResults.map(poll => {
-              const validationResult = validateVotes(poll.votes, memberData);
-              const duplicates = getDuplicateVotes(validationResult);
-              const categorizedVotes = {
-                  validVotes: validationResult.valid,
-                  invalidVotes: validationResult.invalid,
-                  duplicateVotes: duplicates
-              };
-              return {
-                  ...poll,
-                  categorizedVotes,
-                  choiceToVotes: summarizeVotes(categorizedVotes.validVotes)
-              };
-          });
-
-          setPollResults(updatedPollResults);
-          closeAliasModal();
-      }
-  }
-
-
-  // Load aliases from cookies on initial load
-  useEffect(() => {
-    const savedAliases = Cookies.get('aliases');
-    if (savedAliases) {
+  const handleMembersFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
       try {
-        const parsedAliases = JSON.parse(savedAliases);
-        setAliases(parsedAliases);
-      } catch (e) {
-        console.error('Error parsing aliases from cookies:', e);
+        await handleMembersUpload(file);
+        setActiveTab("polls"); // Auto-navigate to polls tab after successful upload
+      } catch (error) {
+        alert(error instanceof Error ? error.message : 'Failed to upload member data');
       }
     }
-  }, []);
+  };
 
-  // Save aliases to cookies whenever they change
-  useEffect(() => {
-    Cookies.set('aliases', JSON.stringify(aliases), { expires: 365 }); // Expires in 1 year
-  }, [aliases]);
-
-  function validateAndParseMemberList(tsv: string): Member[] | { error: string } {
-      const lines = tsv.trim().split("\n");
-      if (lines.length < 2) {
-          return { error: "File must contain at least a header line and one data line" };
+  const handlePollFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        await handlePollUpload(file);
+      } catch (error) {
+        alert(error instanceof Error ? error.message : 'Failed to upload poll data');
       }
+    }
+  };
 
-      // Skip header line and process remaining lines
-      for (let i = 1; i < lines.length; i++) {
-          const line = lines[i];
-          const values = line.split("\t");
-          
-          if (values.length < 1) {
-              return {
-                  error: `Invalid format on line ${i + 1}:\n` +
-                        `"${line}"\n\n` +
-                        `Expected at least VANID, with optional Name and Email.\n` +
-                        `Example of correct format:\n` +
-                        `123456789\tBig Bird\tbird@sesamestreet.org`
-              };
-          }
-      }
-
-      return parseMemberList(tsv);
-  }
-
-  function summarizeVotes(votes : Vote[]) {
-      const summary = new Map<string, number>();
-
-      votes.forEach(vote => {
-          const existing = summary.get(vote.choice) || 0;
-          summary.set(vote.choice, existing + 1);
-      });
-
-      return summary;
-  }
-
-
-
-  function handleMembersUpload(event: React.ChangeEvent<HTMLInputElement>) {
-      const file = event.target.files?.[0];
-      if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-              const tsv = e.target?.result as string;
-              const result = validateAndParseMemberList(tsv);
-              
-              if ('error' in result) {
-                  alert(result.error);
-                  return;
-              }
-              
-              setMemberData(result);
-              
-              if (pollResults.length > 0) {
-                  const updatedPollResults = pollResults.map(poll => {
-                      const validationResult = validateVotes(poll.votes, result);
-                      const duplicates = getDuplicateVotes(validationResult);
-                      const categorizedVotes = {
-                          validVotes: validationResult.valid,
-                          invalidVotes: validationResult.invalid,
-                          duplicateVotes: duplicates
-                      };
-                      return {
-                          ...poll,
-                          categorizedVotes,
-                          choiceToVotes: summarizeVotes(categorizedVotes.validVotes)
-                      };
-                  });
-                  setPollResults(updatedPollResults);
-              }
-
-              // Auto-navigate to polls tab after successful upload
-              setActiveTab("polls");
-          };
-          reader.readAsText(file);
-      }
-  }
-
-  function handleZoomUpload(event: React.ChangeEvent<HTMLInputElement>) {
-      const file = event.target.files?.[0];
-      if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-              const csv = e.target?.result as string;
-              try {
-                  const votes = parseVoteData(csv);
-                  const validationResult = validateVotes(votes, memberData);
-                  const duplicates = getDuplicateVotes(validationResult);
-                  
-                  const categorizedVotes = {
-                      validVotes: validationResult.valid,
-                      invalidVotes: validationResult.invalid,
-                      duplicateVotes: duplicates
-                  };
-
-                  setPollResults([{
-                      name: "Vote Results",
-                      question: "",
-                      votes: votes,
-                      categorizedVotes,
-                      choiceToVotes: summarizeVotes(categorizedVotes.validVotes)
-                  }]);
-              } catch (error) {
-                  alert(error instanceof Error ? error.message : 'Failed to parse vote data');
-              }
-          };
-          reader.readAsText(file);
-      }
-  }
-
-  function handleAliasInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-      setAliasInput(event.target.value);
-  }
-
-  function handleMemberSelect(event: React.ChangeEvent<HTMLSelectElement>) {
-      const selectedVanId = event.target.value;
-      const member = memberData.find(member => member.vanId === selectedVanId);
-      setSelectedMember(member || null);
-  }
-
-  function createAlias() {
-      if (selectedMember && aliasInput) {
-          const newAlias: Alias = { vanId: selectedMember.vanId, alias: aliasInput };
-          const updatedAliases = [...aliases, newAlias];
-
-          setAliases([...aliases, newAlias]);
-          setAliasInput("");
-          setSelectedMember(null);
-
-          // Add alias to vote verification system
-          addVoteAlias(selectedMember.vanId, aliasInput);
-
-          const updatedPollResults = pollResults.map(poll => {
-              const validationResult = validateVotes(poll.votes, memberData);
-              const duplicates = getDuplicateVotes(validationResult);
-              const categorizedVotes = {
-                  validVotes: validationResult.valid,
-                  invalidVotes: validationResult.invalid,
-                  duplicateVotes: duplicates
-              };
-              return {
-                  ...poll,
-                  categorizedVotes,
-                  choiceToVotes: summarizeVotes(categorizedVotes.validVotes)
-              };
-          });
-
-          setPollResults(updatedPollResults);
-      }
-  }
-
-  function resetAllData() {
-    setMemberData([]);
-    setPollResults([]);
-    setAliases([]);
-    setSelectedMember(null);
-    setAliasInput("");
-    setActiveTab("members");
-    Cookies.remove('aliases'); // Clear aliases cookie
-  }
-
-  function resetAliases() {
-    setAliases([]);
-    Cookies.remove('aliases');
-    // Re-categorize votes with empty aliases
-    const updatedPollResults = pollResults.map(poll => {
-      const validationResult = validateVotes(poll.votes, memberData);
-      const duplicates = getDuplicateVotes(validationResult);
-      const categorizedVotes = {
-          validVotes: validationResult.valid,
-          invalidVotes: validationResult.invalid,
-          duplicateVotes: duplicates
-      };
-      return { ...poll, categorizedVotes, choiceToVotes: summarizeVotes(categorizedVotes.validVotes) };
-    });
-    setPollResults(updatedPollResults);
-  }
+  const handleResetAll = () => {
+    resetData();
+    resetAliases();
+  };
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      gap: '20px',
-      padding: '20px',
-      maxWidth: '1200px',
-      margin: '0 auto'
-    }}>
-      {/* Fixed Position Tabs and Reset Button Row */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        borderBottom: '2px solid var(--primary-blue)',
-        paddingBottom: '10px',
-        backgroundColor: 'white',
-        position: 'sticky',
-        top: '0',
-        zIndex: 100,
-        marginBottom: '20px'
-      }}>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => setActiveTab("members")}
-            className="button"
-            style={{
-              backgroundColor: activeTab === "members" ? 'var(--primary-blue)' : '#f8f9fa',
-              color: activeTab === "members" ? 'white' : '#333',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ fontSize: '16px' }}>🐴</span>
-              1 - Members
-            </span>
-            <span style={{
-              backgroundColor: activeTab === "members" ? '#fff' : 'var(--primary-blue)',
-              color: activeTab === "members" ? 'var(--primary-blue)' : '#fff',
-              padding: '2px 8px',
-              borderRadius: '12px',
-              fontSize: '0.8em'
-            }}>
-              {memberData.length}
-            </span>
-          </button>
+    <main className={styles.main}>
+      <TabNavigation
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        memberCount={memberData.length}
+        pollCount={pollResults.length}
+        aliasCount={aliases.length}
+        onResetData={handleResetAll}
+        hasData={memberData.length > 0}
+      />
 
-          <button
-            onClick={() => setActiveTab("polls")}
-            className="button"
-            style={{
-              backgroundColor: activeTab === "polls" ? 'var(--primary-blue)' : '#f8f9fa',
-              color: activeTab === "polls" ? 'white' : '#333',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ fontSize: '16px' }}>📹</span>
-              2 - Zoom Polls
-            </span>
-            <span style={{
-              backgroundColor: activeTab === "polls" ? '#fff' : 'var(--primary-blue)',
-              color: activeTab === "polls" ? 'var(--primary-blue)' : '#fff',
-              padding: '2px 8px',
-              borderRadius: '12px',
-              fontSize: '0.8em'
-            }}>
-              {pollResults.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("aliases")}
-            className="button"
-            style={{
-              backgroundColor: activeTab === "aliases" ? 'var(--primary-blue)' : '#f8f9fa',
-              color: activeTab === "aliases" ? 'white' : '#333',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ fontSize: '16px' }}>🔄</span>
-              3 - Aliases
-            </span>
-            <span style={{
-              backgroundColor: activeTab === "aliases" ? '#fff' : 'var(--primary-blue)',
-              color: activeTab === "aliases" ? 'var(--primary-blue)' : '#fff',
-              padding: '2px 8px',
-              borderRadius: '12px',
-              fontSize: '0.8em'
-            }}>
-              {aliases.length}
-            </span>
-          </button>
-        </div>
-
-        <button 
-          onClick={resetAllData}
-          className="button"
-          style={{
-            backgroundColor: 'var(--button-orange)',
-            color: 'white'
-          }}
-          disabled={memberData.length === 0}
-        >
-          Reset All Data
-        </button>
-      </div>
-
-      {/* Members Tab Content */}
       {activeTab === "members" && (
-        <div>
-          <div style={{ marginBottom: '20px' }}>
-            <input 
-              type="file" 
-              accept=".txt" 
-              onChange={handleMembersUpload}
-              style={{ 
-                padding: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                backgroundColor: '#fff'
-              }}
-            />
-          </div>
-          {memberData.length > 0 && (
-            <MaterialReactTable
-              columns={[
-                { header: "Voter ID", accessorKey: "vanId" },
-                { header: "Name", accessorKey: "name" },
-                { header: "Email", accessorKey: "preferredEmail" }
-              ]}
-              data={memberData}
-            />
-          )}
-        </div>
+        <MembersTab
+          memberData={memberData}
+          onMembersUpload={handleMembersFileUpload}
+        />
       )}
 
-      {/* Polls Tab Content */}
       {activeTab === "polls" && (
-        <div>
-          <div style={{ marginBottom: '20px' }}>
-            <input 
-              type="file" 
-              accept=".csv" 
-              onChange={handleZoomUpload}
-              disabled={!memberData.length}
-              style={{ 
-                padding: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                backgroundColor: memberData.length ? '#fff' : '#f8f9fa'
-              }}
-            />
-          </div>
-          {pollResults.map((poll, index) => (
-            <div key={index} style={{ marginBottom: '30px' }}>
-              <h2>Poll: {poll.name}</h2>
-              {poll.question && (
-                <div style={{ 
-                  marginBottom: '20px',
-                  padding: '15px',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '8px',
-                  border: '1px solid #e9ecef'
-                }}>
-                  <h3 style={{ marginTop: 0, marginBottom: '10px' }}>Question:</h3>
-                  <p style={{ margin: 0 }}>{poll.question}</p>
-                </div>
-              )}
-              <div style={{ marginBottom: '30px' }}>
-                <h3>Vote Summary</h3>
-                <div style={{ marginTop: '15px' }}>
-                  {Array.from(poll.choiceToVotes.entries()).map(([vote, count]) => {
-                    const percentage = Math.floor((count / poll.categorizedVotes.validVotes.length) * 100);
-                    return (
-                      <div key={vote} style={{ marginBottom: '12px' }}>
-                        <div style={{ marginBottom: '4px' }}>
-                          <div style={{ fontWeight: 'bold' }}>{vote}</div>
-                        </div>
-                        <div style={{ 
-                          width: '100%', 
-                          height: '30px',
-                          backgroundColor: '#f0f0f0',
-                          borderRadius: '4px',
-                          overflow: 'hidden'
-                        }}>
-                          <div style={{
-                            width: `${Math.max(percentage, 15)}%`,
-                            height: '100%',
-                            background: 'linear-gradient(90deg, var(--primary-blue) 0%, #0094c2 100%)',
-                            transition: 'width 0.3s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            paddingLeft: '10px',
-                            paddingRight: '10px',
-                            color: 'white',
-                            fontWeight: 'bold',
-                            boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.1)',
-                            whiteSpace: 'nowrap'
-                          }}>
-                            {count} votes ({percentage}%)
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              <div>
-                <p>
-                  There were <b>{poll.votes.length}</b> total votes,{" "}
-                  <b>{poll.categorizedVotes.validVotes.length}</b> valid votes,{" "}
-                  <b>{poll.categorizedVotes.invalidVotes.length}</b> invalid votes, and{" "}
-                  <b>{poll.categorizedVotes.duplicateVotes.length}</b> duplicates
-                </p>
-                {poll.categorizedVotes.invalidVotes.length > 0 && (
-                  <div style={{ marginBottom: '20px' }}>
-                    <button
-                      onClick={() => setExpandedVotes(prev => ({
-                        ...prev,
-                        [poll.name]: {
-                          ...prev[poll.name] || {},
-                          invalid: !(prev[poll.name]?.invalid ?? false)
-                        }
-                      }))}
-                      className="button"
-                      style={{
-                        backgroundColor: expandedVotes[poll.name]?.invalid ? 'var(--primary-blue)' : '#f8f9fa',
-                        color: expandedVotes[poll.name]?.invalid ? 'white' : '#333',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '8px 16px',
-                        borderRadius: '20px',
-                        border: '1px solid var(--primary-blue)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <span>Invalid Votes</span>
-                      <span style={{
-                        backgroundColor: expandedVotes[poll.name]?.invalid ? '#fff' : 'var(--primary-blue)',
-                        color: expandedVotes[poll.name]?.invalid ? 'var(--primary-blue)' : '#fff',
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        fontSize: '0.9em',
-                        minWidth: '24px',
-                        textAlign: 'center'
-                      }}>
-                        {poll.categorizedVotes.invalidVotes.length}
-                      </span>
-                      <span style={{ 
-                        fontSize: '0.8em',
-                        transform: expandedVotes[poll.name]?.invalid ? 'rotate(180deg)' : 'none',
-                        transition: 'transform 0.2s ease'
-                      }}>
-                        ▼
-                      </span>
-                    </button>
-                  </div>
-                )}
-
-                {expandedVotes[poll.name]?.invalid && (
-                  <div style={{ marginBottom: '20px' }}>
-                    <MaterialReactTable
-                      columns={[
-                        { header: "Username", accessorKey: "username" },
-                        { header: "Email", accessorKey: "email" },
-                        { header: "Time", accessorKey: "time" },
-                        { header: "Choice", accessorKey: "choice" },
-                        {
-                          header: "Actions",
-                          accessorKey: "actions",
-                          Cell: ({ row }) => (
-                            <button 
-                              onClick={() => openAliasModal(row.original.username)}
-                              className="button"
-                              style={{
-                                backgroundColor: 'var(--primary-blue)',
-                                color: 'white',
-                                padding: '4px 8px'
-                              }}
-                            >
-                              Create Alias
-                            </button>
-                          )
-                        }
-                      ]}
-                      data={poll.categorizedVotes.invalidVotes}
-                    />
-                  </div>
-                )}
-
-                {poll.categorizedVotes.duplicateVotes.length > 0 && (
-                  <div style={{ marginBottom: '20px' }}>
-                    <button
-                      onClick={() => setExpandedVotes(prev => ({
-                        ...prev,
-                        [poll.name]: {
-                          ...prev[poll.name] || {},
-                          duplicate: !(prev[poll.name]?.duplicate ?? false)
-                        }
-                      }))}
-                      className="button"
-                      style={{
-                        backgroundColor: expandedVotes[poll.name]?.duplicate ? 'var(--primary-blue)' : '#f8f9fa',
-                        color: expandedVotes[poll.name]?.duplicate ? 'white' : '#333',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '8px 16px',
-                        borderRadius: '20px',
-                        border: '1px solid var(--primary-blue)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <span>Duplicate Votes</span>
-                      <span style={{
-                        backgroundColor: expandedVotes[poll.name]?.duplicate ? '#fff' : 'var(--primary-blue)',
-                        color: expandedVotes[poll.name]?.duplicate ? 'var(--primary-blue)' : '#fff',
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        fontSize: '0.9em',
-                        minWidth: '24px',
-                        textAlign: 'center'
-                      }}>
-                        {poll.categorizedVotes.duplicateVotes.length}
-                      </span>
-                      <span style={{ 
-                        fontSize: '0.8em',
-                        transform: expandedVotes[poll.name]?.duplicate ? 'rotate(180deg)' : 'none',
-                        transition: 'transform 0.2s ease'
-                      }}>
-                        ▼
-                      </span>
-                    </button>
-                  </div>
-                )}
-
-                {expandedVotes[poll.name]?.duplicate && (
-                  <div style={{ marginBottom: '20px' }}>
-                    <MaterialReactTable
-                      columns={["username", "email", "time", "choice"].map(header => ({
-                        header,
-                        accessorKey: header
-                      }))}
-                      data={poll.categorizedVotes.duplicateVotes}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        <PollsTab
+          pollResults={pollResults}
+          onPollUpload={handlePollFileUpload}
+          hasMemberData={memberData.length > 0}
+          onCreateAlias={openAliasModal}
+        />
       )}
 
-      {/* Aliases Tab Content */}
       {activeTab === "aliases" && (
-        <div>
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: '15px', 
-            maxWidth: '500px',
-            marginBottom: '30px'
-          }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '5px' }}>Alias Name:</label>
-              <input
-                type="text"
-                value={aliasInput}
-                onChange={handleAliasInputChange}
-                placeholder="Enter alias"
-                style={{ 
-                  width: '100%',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc'
-                }}
-              />
-            </div>
-            <div style={{ position: 'relative' }}>
-              <label style={{ display: 'block', marginBottom: '5px' }}>Select Member</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  value={memberSearch}
-                  onChange={(e) => setMemberSearch(e.target.value)}
-                  placeholder="Search members..."
-                  style={{ 
-                    width: '100%',
-                    padding: '8px 32px 8px 8px',
-                    borderRadius: '4px',
-                    border: '1px solid #ccc'
-                  }}
-                />
-                <span style={{
-                  position: 'absolute',
-                  right: '8px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#666',
-                  fontSize: '16px'
-                }}>
-                  🔍
-                </span>
-              </div>
-              <div style={{ 
-                maxHeight: '200px', 
-                overflowY: 'auto', 
-                border: '1px solid #ccc', 
-                borderRadius: '4px',
-                marginTop: '5px',
-                backgroundColor: 'white'
-              }}>
-                {memberData
-                  .filter(member => {
-                    const searchTerm = memberSearch.toLowerCase();
-                    return (
-                      member.vanId.toLowerCase().includes(searchTerm) ||
-                      (member.name && member.name.toLowerCase().includes(searchTerm)) ||
-                      (member.preferredEmail && member.preferredEmail.toLowerCase().includes(searchTerm))
-                    );
-                  })
-                  .map(member => (
-                    <div
-                      key={member.vanId}
-                      onClick={() => setSelectedMember(member)}
-                      style={{
-                        padding: '8px',
-                        cursor: 'pointer',
-                        backgroundColor: selectedMember?.vanId === member.vanId ? '#e6f3ff' : 'transparent'
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.target as HTMLElement).style.backgroundColor = 
-                          selectedMember?.vanId === member.vanId ? '#e6f3ff' : 'transparent';
-                      }}
-                    >
-                      {member.vanId} - {member.name || '[No name]'} {member.preferredEmail ? `(${member.preferredEmail})` : ''}
-                    </div>
-                  ))}
-              </div>
-            </div>
-            <div style={{ 
-              display: 'flex', 
-              gap: '10px', 
-              marginTop: '15px',
-              justifyContent: 'flex-end'
-            }}>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button 
-                  onClick={resetAliases}
-                  className="button"
-                  style={{
-                    backgroundColor: 'var(--button-orange)',
-                    color: 'white'
-                  }}
-                >
-                  Reset Aliases
-                </button>
-                <button 
-                  onClick={createAlias} 
-                  disabled={!aliasInput || !selectedMember}
-                  className="button"
-                  style={{
-                    backgroundColor: !aliasInput || !selectedMember ? '#ccc' : 'var(--primary-blue)',
-                    color: 'white'
-                  }}
-                >
-                  Add Alias
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {aliases.length > 0 ? (
-            <MaterialReactTable
-              columns={[
-                { header: "VanID", accessorKey: "vanId" },
-                { header: "Alias", accessorKey: "alias" },
-                { 
-                  header: "Matched Member",
-                  accessorFn: (row) => {
-                    const member = memberData.find(m => m.vanId === row.vanId);
-                    return member ? `${member.name || '[No name]'} (${member.preferredEmail || 'No email'})` : 'Member not found';
-                  }
-                }
-              ]}
-              data={aliases}
-            />
-          ) : (
-            <p>No aliases!</p>
-          )}
-        </div>
+        <AliasesTab
+          aliases={aliases}
+          memberData={memberData}
+          onCreateAlias={createAlias}
+          onResetAliases={resetAliases}
+        />
       )}
-
-      <Modal 
-        isOpen={isModalOpen} 
-        onRequestClose={closeAliasModal}
-        style={{
-          content: {
-            top: '50%',
-            left: '50%',
-            right: 'auto',
-            bottom: 'auto',
-            marginRight: '-50%',
-            transform: 'translate(-50%, -50%)',
-            width: '500px',
-            padding: '20px',
-            borderRadius: '8px',
-            zIndex: 1000
-          },
-          overlay: {
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 999
-          }
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <h2 style={{ margin: '0 0 10px 0' }}>Create Alias</h2>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Alias Name:</label>
-            <input
-              type="text"
-              value={prefilledAlias}
-              onChange={(e) => setPrefilledAlias(e.target.value)}
-              placeholder="Enter alias"
-              style={{ 
-                width: '100%',
-                padding: '8px',
-                borderRadius: '4px',
-                border: '1px solid #ccc'
-              }}
-            />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Select Member</label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                value={modalMemberSearch}
-                onChange={(e) => setModalMemberSearch(e.target.value)}
-                placeholder="Search members..."
-                style={{ 
-                  width: '100%',
-                  padding: '8px 32px 8px 8px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc'
-                }}
-              />
-              <span style={{
-                position: 'absolute',
-                right: '8px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: '#666',
-                fontSize: '16px'
-              }}>
-                🔍
-              </span>
-            </div>
-            <div style={{ 
-              maxHeight: '200px', 
-              overflowY: 'auto', 
-              border: '1px solid #ccc', 
-              borderRadius: '4px',
-              marginTop: '5px',
-              backgroundColor: 'white'
-            }}>
-              {memberData
-                .filter(member => {
-                  const searchTerm = modalMemberSearch.toLowerCase();
-                  return (
-                    member.vanId.toLowerCase().includes(searchTerm) ||
-                    (member.name && member.name.toLowerCase().includes(searchTerm)) ||
-                    (member.preferredEmail && member.preferredEmail.toLowerCase().includes(searchTerm))
-                  );
-                })
-                .map(member => (
-                  <div
-                    key={member.vanId}
-                    onClick={() => setSelectedMember(member)}
-                    style={{
-                      padding: '8px',
-                      cursor: 'pointer',
-                      backgroundColor: selectedMember?.vanId === member.vanId ? '#e6f3ff' : 'transparent'
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.target as HTMLElement).style.backgroundColor = '#f5f5f5';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.target as HTMLElement).style.backgroundColor = 
-                        selectedMember?.vanId === member.vanId ? '#e6f3ff' : 'transparent';
-                    }}
-                  >
-                    {member.vanId} - {member.name || '[No name]'} {member.preferredEmail ? `(${member.preferredEmail})` : ''}
-                  </div>
-                ))}
-            </div>
-          </div>
-          <div style={{ 
-            display: 'flex', 
-            gap: '10px', 
-            marginTop: '15px',
-            justifyContent: 'flex-end' 
-          }}>
-            <button 
-              onClick={closeAliasModal}
-              className="button"
-              style={{
-                backgroundColor: '#f5f5f5',
-                color: '#333',
-                border: '1px solid #ccc'
-              }}
-            >
-              Cancel
-            </button>
-            <button 
-              onClick={createAliasFromModal} 
-              disabled={!prefilledAlias || !selectedMember}
-              className="button"
-              style={{
-                backgroundColor: !prefilledAlias || !selectedMember ? '#ccc' : 'var(--primary-blue)',
-                color: 'white'
-              }}
-            >
-              Add Alias
-            </button>
-          </div>
-        </div>
-      </Modal>
-    </div>
+    </main>
   );
 }
