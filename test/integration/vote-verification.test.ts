@@ -6,11 +6,9 @@ import {
   parseVoteData,
   validateVotes,
   addAlias,
-  getInvalidVotes,
   getDuplicateVotes,
   type Member,
-  type Vote,
-  type ValidationResult
+  type Vote
 } from '../../app/vote-verification';
 
 describe('Vote Verification Flow', () => {

@@ -23,12 +23,9 @@ export default function App() {
 
   const {
     aliases,
-    isModalOpen,
-    prefilledAlias,
     createAlias,
     resetAliases,
-    openAliasModal,
-    closeAliasModal
+    openAliasModal
   } = useAliases(() => {
     // Re-validate votes when aliases change
     if (pollResults.length > 0) {
@@ -46,7 +43,11 @@ export default function App() {
         await handleMembersUpload(file);
         setActiveTab("polls"); // Auto-navigate to polls tab after successful upload
       } catch (error) {
-        alert(error instanceof Error ? error.message : 'Failed to upload member data');
+        console.error('Failed to upload member data:', error);
+        // Use a more user-friendly notification method instead of alert
+        const errorMessage = error instanceof Error ? error.message : 'Failed to upload member data';
+        // Display error message in UI (could use a toast or error component)
+        document.getElementById('error-message')?.setAttribute('data-error', errorMessage);
       }
     }
   };
@@ -57,7 +58,11 @@ export default function App() {
       try {
         await handlePollUpload(file);
       } catch (error) {
-        alert(error instanceof Error ? error.message : 'Failed to upload poll data');
+        console.error('Failed to upload poll data:', error);
+        // Use a more user-friendly notification method instead of alert
+        const errorMessage = error instanceof Error ? error.message : 'Failed to upload poll data';
+        // Display error message in UI (could use a toast or error component)
+        document.getElementById('error-message')?.setAttribute('data-error', errorMessage);
       }
     }
   };

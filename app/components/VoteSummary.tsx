@@ -1,6 +1,5 @@
 import React from 'react';
 import styles from '../styles/VoteSummary.module.css';
-import { type Vote } from '../vote-verification';
 
 interface VoteSummaryProps {
   name: string;
@@ -20,8 +19,7 @@ export const VoteSummary: React.FC<VoteSummaryProps> = ({
   validVotes,
   invalidVotes,
   duplicateVotes
-}) => {
-  return (
+}) => (
     <div className={styles.container}>
       <h2 className={styles.title}>Poll: {name}</h2>
       
@@ -68,4 +66,3 @@ export const VoteSummary: React.FC<VoteSummaryProps> = ({
       </div>
     </div>
   );
-};

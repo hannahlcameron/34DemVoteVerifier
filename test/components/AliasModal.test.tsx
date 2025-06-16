@@ -1,14 +1,11 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AliasModal } from '../../app/components/AliasModal';
-import Modal from 'react-modal';
 
 // Mock react-modal
-jest.mock('react-modal', () => {
-  return jest.fn(({ isOpen, children }) => (
+jest.mock('react-modal', () => jest.fn(({ isOpen, children }) => (
     isOpen ? <div data-testid="modal">{children}</div> : null
-  ));
-});
+  )));
 
 describe('AliasModal', () => {
   const mockOnClose = jest.fn();

@@ -47,8 +47,9 @@ export const AliasModal: React.FC<AliasModalProps> = ({
         <h2 className={styles.title}>Create Alias</h2>
         
         <div className={styles.inputGroup}>
-          <label className={styles.label}>Alias Name:</label>
+          <label htmlFor="aliasNameInput" className={styles.label}>Alias Name:</label>
           <input
+            id="aliasNameInput"
             type="text"
             value={aliasName}
             onChange={(e) => setAliasName(e.target.value)}
@@ -58,9 +59,10 @@ export const AliasModal: React.FC<AliasModalProps> = ({
         </div>
 
         <div className={styles.inputGroup}>
-          <label className={styles.label}>Select Member</label>
+          <label htmlFor="memberSearchInput" className={styles.label}>Select Member</label>
           <div className={styles.searchContainer}>
             <input
+              id="memberSearchInput"
               type="text"
               value={memberSearch}
               onChange={(e) => setMemberSearch(e.target.value)}
@@ -81,13 +83,19 @@ export const AliasModal: React.FC<AliasModalProps> = ({
                 );
               })
               .map(member => (
-                <div
+                <button
                   key={member.vanId}
                   onClick={() => setSelectedMember(member)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      setSelectedMember(member);
+                    }
+                  }}
+                  type="button"
                   className={`${styles.memberItem} ${selectedMember?.vanId === member.vanId ? styles.selected : ''}`}
                 >
                   {member.vanId} - {member.name || '[No name]'} {member.preferredEmail ? `(${member.preferredEmail})` : ''}
-                </div>
+                </button>
               ))}
           </div>
         </div>
