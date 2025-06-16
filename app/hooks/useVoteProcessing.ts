@@ -59,8 +59,7 @@ export function useVoteProcessing() {
     return parseMemberList(tsv);
   };
 
-  const handleMembersUpload = (file: File): Promise<void> => {
-    return new Promise((resolve, reject) => {
+  const handleMembersUpload = (file: File): Promise<void> => new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const tsv = e.target?.result as string;
@@ -95,7 +94,6 @@ export function useVoteProcessing() {
       reader.onerror = () => reject(new Error('Failed to read file'));
       reader.readAsText(file);
     });
-  };
 
   const processVotes = (votes: Vote[]) => {
     const validationResult = validateVotes(votes, memberData);

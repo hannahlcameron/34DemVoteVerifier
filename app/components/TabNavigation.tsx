@@ -21,8 +21,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
   aliasCount,
   onResetData,
   hasData
-}) => {
-  return (
+}) => (
     <div className={styles.container}>
       <div className={styles.tabGroup}>
         <TabButton
@@ -57,7 +56,6 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
       </button>
     </div>
   );
-};
 
 interface TabButtonProps {
   active: boolean;
@@ -73,8 +71,7 @@ const TabButton: React.FC<TabButtonProps> = ({
   icon,
   label,
   count
-}) => {
-  return (
+}) => (
     <button
       onClick={onClick}
       className={`${styles.tabButton} ${active ? styles.active : ''}`}
@@ -88,4 +85,3 @@ const TabButton: React.FC<TabButtonProps> = ({
       </span>
     </button>
   );
-};

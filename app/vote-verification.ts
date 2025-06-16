@@ -404,7 +404,7 @@ export function parseCSVVotes(csv: string): PollResult[] | { error: string } {
       
       // Join the remaining fields as the choice (in case it contains commas)
       // But handle trailing empty fields by filtering them out
-      let choiceFields = fields.slice(4);
+      const choiceFields = fields.slice(4);
       // Remove trailing empty fields
       while (choiceFields.length > 0 && choiceFields[choiceFields.length - 1].trim() === '') {
           choiceFields.pop();
