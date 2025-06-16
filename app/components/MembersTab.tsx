@@ -41,6 +41,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({
           accept=".txt" 
           onChange={onMembersUpload}
           className={styles.fileInput}
+          data-testid="file-input"
         />
       </div>
       

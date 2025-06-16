@@ -36,14 +36,18 @@ export const VoteSummary: React.FC<VoteSummaryProps> = ({
         <h3 className={styles.summaryTitle}>Vote Summary</h3>
         <div className={styles.chartContainer}>
           {Array.from(choiceToVotes.entries()).map(([vote, count]) => {
-            const percentage = Math.floor((count / validVotes) * 100);
+            // Handle the case when validVotes is 0 to avoid NaN
+            const percentage = validVotes > 0 ? Math.floor((count / validVotes) * 100) : 0;
+            // Always ensure a minimum width of 15% for visibility
+            const barWidth = Math.max(percentage, 15);
+            
             return (
               <div key={vote} className={styles.chartRow}>
                 <div className={styles.choiceLabel}>{vote}</div>
                 <div className={styles.barContainer}>
                   <div 
                     className={styles.bar}
-                    style={{ width: `${Math.max(percentage, 15)}%` }}
+                    style={{ width: `${barWidth}%` }}
                   >
                     {count} votes ({percentage}%)
                   </div>

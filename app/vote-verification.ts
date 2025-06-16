@@ -190,8 +190,12 @@ export function findVoteBlock(lines: string[]): VoteBlock | null {
           continue;
       }
 
-      if (line.startsWith("#,User Name,Email Address,Submitted Date and Time,")) {
+      // Look for the header line that contains the column names
+      if (line.includes("#,User Name,Email Address,Submitted Date and Time") || 
+          line.includes("#,User Name,Email Address,Submitted Date and Time,")) {
           headerIndex = i;
+          
+          // Look backwards to find the poll title
           for (let j = i - 1; j >= 0; j--) {
               const titleLine = lines[j].trim();
               if (titleLine && !titleLine.startsWith("#") && 
@@ -232,84 +236,102 @@ export function parseCSVField(
   startIdx: number, 
   startLine: number
 ): { value: string, nextIdx: number, content: string[] } | { error: string } {
-  const fields: string[] = [];
-  let field = '';
-  let inQuotes = false;
-  let allContent = [lines[startIdx]];
+  // Skip empty lines
   let currentLineIdx = startIdx;
-  let currentLine = lines[startIdx];
-  
-  while (true) {
-      for (let i = 0; i < currentLine.length; i++) {
-          const char = currentLine[i];
-          if (char === '"') {
-              if (inQuotes) {
-                  if (i + 1 < currentLine.length && currentLine[i + 1] === '"') {
-                      field += '"';
-                      i++;
-                  } else {
-                      inQuotes = false;
-                      while (i + 1 < currentLine.length && currentLine[i + 1] !== ',') {
-                          i++;
-                      }
-                  }
-              } else {
-                  inQuotes = true;
-              }
-          } else if (char === ',' && !inQuotes) {
-              fields.push(field.trim());
-              field = '';
-          } else {
-              field += char;
-          }
-      }
-      
-      if (inQuotes && currentLineIdx + 1 < lines.length) {
-          currentLineIdx++;
-          currentLine = lines[currentLineIdx];
-          allContent.push(currentLine);
-          field += '\n';
+  while (currentLineIdx < lines.length) {
+    const line = lines[currentLineIdx];
+    if (line && line.trim()) {
+      break;
+    }
+    currentLineIdx++;
+  }
+
+  if (currentLineIdx >= lines.length) {
+    return {
+      error: `Line ${startLine} is empty`
+    };
+  }
+
+  const line = lines[currentLineIdx];
+  const content = [line];
+
+  // Check if the line is just a number followed by commas (e.g., "9,,,,,")
+  // This is a common pattern in the CSV files where a line number is present but no data
+  const emptyLinePattern = /^\d+,\s*,*\s*$/;
+  if (emptyLinePattern.test(line)) {
+    // Skip this line and move to the next one
+    return parseCSVField(lines, currentLineIdx + 1, startLine + 1);
+  }
+
+  // Split by commas, but respect quotes
+  const fields: string[] = [];
+  let currentField = '';
+  let inQuotes = false;
+  let i = 0;
+
+  while (i < line.length) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+        // Handle escaped quotes
+        currentField += '"';
+        i += 2;
       } else {
-          fields.push(field.trim());
-          break;
+        inQuotes = !inQuotes;
+        i++;
       }
+    } else if (char === ',' && !inQuotes) {
+      fields.push(currentField.trim());
+      currentField = '';
+      i++;
+    } else {
+      currentField += char;
+      i++;
+    }
+  }
+  if (currentField.trim()) {
+    fields.push(currentField.trim());
   }
 
-  const fullContent = allContent.join('\n');
-  const lineRange = allContent.length > 1 ? 
-      `Lines ${startLine}-${startLine + allContent.length - 1}` : 
-      `Line ${startLine}`;
-
-  if (fields.length < 5) {
-      return { 
-        error: `${lineRange} has invalid format:\n` +
-              `"${fullContent}"\n\n` +
-              `Expected 5 fields (number, name, email, time, vote) but got ${fields.length} fields.`
-      };
-  }
-
-  const cleanFields = fields.map(f => {
-      let cleaned = f.trim();
-      if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
-          cleaned = cleaned.slice(1, -1);
-      }
-      return cleaned.replace(/""/g, '"');
+  // Clean up fields
+  const cleanFields = fields.map(field => {
+    let cleaned = field.trim();
+    if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+      cleaned = cleaned.slice(1, -1);
+    }
+    return cleaned.replace(/""/g, '"');
   });
+
+  if (cleanFields.length < 5) {
+    // If we have fewer than 5 fields but the line isn't empty, try to handle it
+    // by checking if it's a header or metadata line that should be skipped
+    if (line.includes('Overview') || line.includes('Report Generated') || 
+        line.includes('Launched Polls') || line.includes('Poll Name')) {
+      // Skip this line and move to the next one
+      return parseCSVField(lines, currentLineIdx + 1, startLine + 1);
+    }
+    
+    return {
+      error: `Line ${startLine} has invalid format:\n` +
+            `"${line}"\n\n` +
+            `Expected 5 fields (number, name, email, time, vote) but got ${cleanFields.length} fields.`
+    };
+  }
 
   const [voteNum] = cleanFields;
   const parsedVoteNum = parseInt(voteNum);
   if (isNaN(parsedVoteNum)) {
-      return {
-        error: `${lineRange} has invalid vote number:\n` +
-              `"${fullContent}"\n\n` +
-              `Vote number "${voteNum}" is not a valid number`
-      };
+    return {
+      error: `Line ${startLine} has invalid vote number:\n` +
+            `"${line}"\n\n` +
+            `Vote number "${voteNum}" is not a valid number`
+    };
   }
 
   return {
-      value: cleanFields.join(','),
-      nextIdx: currentLineIdx,
-      content: allContent
+    value: cleanFields.join(','),
+    nextIdx: currentLineIdx,
+    content: content
   };
 }
 
@@ -321,80 +343,108 @@ export function parseCSVVotes(csv: string): PollResult[] | { error: string } {
       return { error: "The input file is empty" };
   }
 
-  const blocks = csv.split(/\r?\n\r?\n/);
+  // Process the entire file as a single block instead of splitting by empty lines
+  // This helps with files that have a specific structure like the whitespace CSV
+  const allLines = csv.split(/\r?\n/);
+  
+  // Find all vote blocks in the file
   const results: PollResult[] = [];
-
-  for (const block of blocks) {
-      const lines = block.split(/\r?\n/);
-      const voteBlock = findVoteBlock(lines);
-      
-      if (!voteBlock) continue;
-
-      const { title: pollName, headerIndex, question } = voteBlock;
-      const voteLines = lines.slice(headerIndex + 1);
-      
-      if (voteLines.length === 0) {
-          return { error: `No votes found in poll "${pollName}"` };
-      }
-
-      const votes: Vote[] = [];
-      let currentLine = 1; // Skip header
-
-      while (currentLine < voteLines.length) {
-          const line = voteLines[currentLine];
-          if (!line.trim()) {
-              currentLine++;
-              continue;
-          }
-
-          const result = parseCSVField(voteLines, currentLine, headerIndex + currentLine + 2);
-          if ('error' in result) {
-              return result;
-          }
-
-          const [_, username, email, time, choice] = result.value.split(',');
-          
-          if (!username || !email || !time || !choice) {
-              const missing = [];
-              if (!username) missing.push("name");
-              if (!email) missing.push("email");
-              if (!time) missing.push("time");
-              if (!choice) missing.push("choice");
-              
-              return { 
-                error: `Vote on line ${headerIndex + currentLine + 2} is missing required data:\n` +
-                      `"${result.content.join('\n')}"\n\n` +
-                      `Missing fields: ${missing.join(", ")}`
-              };
-          }
-
-          votes.push({
-              username: username.trim(),
-              email: email.trim(),
-              time: time.trim(),
-              choice: choice.trim()
-          });
-
-          currentLine = result.nextIdx + 1;
-      }
-
-      if (votes.length === 0) {
-          return { error: `No valid votes found in poll "${pollName}". Please check the data format.` };
-      }
-
-      results.push({
-          name: pollName,
-          question: question,
-          votes: votes,
-          validationResult: { valid: [], invalid: [] },
-          choiceToVotes: new Map()
-      });
-  }
-
-  if (results.length === 0) {
+  
+  // First, try to find the vote block header
+  const voteBlock = findVoteBlock(allLines);
+  if (!voteBlock) {
       return { error: "No poll data found in the file. The file should contain poll results with a header row starting with '#'" };
   }
-
+  
+  const { title: pollName, headerIndex, question } = voteBlock;
+  const voteLines = allLines.slice(headerIndex + 1);
+  
+  if (voteLines.length === 0) {
+      return { error: `No votes found in poll "${pollName}"` };
+  }
+  
+  const votes: Vote[] = [];
+  let currentLine = 0;
+  
+  while (currentLine < voteLines.length) {
+      const line = voteLines[currentLine];
+      
+      // Skip empty lines or lines with just commas
+      if (!line.trim() || line.trim().replace(/,/g, '').trim() === '') {
+          currentLine++;
+          continue;
+      }
+      
+      // Skip header or metadata lines
+      if (line.includes('Overview') || line.includes('Report Generated') || 
+          line.includes('Launched Polls') || line.includes('Poll Name')) {
+          currentLine++;
+          continue;
+      }
+      
+      // Parse the vote line
+      const fields = line.split(',');
+      
+      // Check if this is a vote line (starts with a number)
+      const voteNumber = parseInt(fields[0]);
+      if (isNaN(voteNumber)) {
+          currentLine++;
+          continue;
+      }
+      
+      // Ensure we have enough fields
+      if (fields.length < 5) {
+          currentLine++;
+          continue;
+      }
+      
+      const username = fields[1].trim();
+      const email = fields[2].trim();
+      const time = fields[3].trim();
+      
+      // Join the remaining fields as the choice (in case it contains commas)
+      // But handle trailing empty fields by filtering them out
+      let choiceFields = fields.slice(4);
+      // Remove trailing empty fields
+      while (choiceFields.length > 0 && choiceFields[choiceFields.length - 1].trim() === '') {
+          choiceFields.pop();
+      }
+      const choice = choiceFields.join(',').trim();
+      
+      if (!username || !email || !time || !choice) {
+          const missing = [];
+          if (!username) missing.push("name");
+          if (!email) missing.push("email");
+          if (!time) missing.push("time");
+          if (!choice) missing.push("choice");
+          
+          // Skip this line if it's missing data, but don't fail the entire parse
+          currentLine++;
+          continue;
+      }
+      
+      votes.push({
+          username,
+          email,
+          time,
+          choice
+      });
+      
+      currentLine++;
+  }
+  
+  if (votes.length === 0) {
+      return { error: `No valid votes found in poll "${pollName}". Please check the data format.` };
+  }
+  
+  results.push({
+      name: pollName,
+      question: question,
+      votes: votes,
+      validationResult: { valid: [], invalid: [] },
+      choiceToVotes: new Map()
+  });
+  
   return results;
 }
 

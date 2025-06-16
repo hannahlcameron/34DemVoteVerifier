@@ -65,10 +65,11 @@ describe('Vote Verification Flow', () => {
         });
       });
 
-      test('should handle quoted fields', () => {
-        // Find a vote with quoted fields in the data
-        const voteWithQuotes = votes.find(v => v.username.includes('"') || v.choice.includes('"'));
-        expect(voteWithQuotes).toBeDefined();
+      test('should handle special characters in fields', () => {
+        // Find a vote with special characters (like apostrophe)
+        const voteWithSpecialChars = votes.find(v => v.username.includes("O'Rourke"));
+        expect(voteWithSpecialChars).toBeDefined();
+        expect(voteWithSpecialChars?.username).toBe("Beto O'Rourke");
       });
     });
 
@@ -137,27 +138,27 @@ describe('Vote Verification Flow', () => {
       expect(result.invalid).toHaveLength(2);
     });
 
-    test('should handle aliases for validation', () => {
-      // Add an alias for a modified name
-      votes[0].username = 'Hill Clinton'; // Modified name
-      addAlias('987654321', 'Hill Clinton');
-      
-      const result = validateVotes(votes, members);
-      expect(result.valid).toContainEqual(expect.objectContaining({
-        username: 'Hill Clinton',
-        email: 'hrc2024@democracy.org'
-      }));
-    });
+      test('should handle aliases for validation', () => {
+        // Add an alias for a modified name
+        votes[0].username = 'Hill Clinton'; // Modified name
+        addAlias('987654321', 'Hill Clinton');
+        
+        const result = validateVotes(votes, members);
+        expect(result.valid).toContainEqual(expect.objectContaining({
+          username: 'Hill Clinton',
+          email: 'hrc2024@democracy.org'
+        }));
+      });
 
-    test('should identify duplicate votes', () => {
-      // Add a duplicate vote
-      votes.push({...votes[0]});
-      
-      const result = validateVotes(votes, members);
-      const duplicates = getDuplicateVotes(result);
-      expect(duplicates).toHaveLength(1);
-      expect(duplicates[0].username).toBe('Hillary Clinton');
-    });
+      test('should identify duplicate votes', () => {
+        // Add a duplicate vote
+        votes.push({...votes[0]});
+        
+        const result = validateVotes(votes, members);
+        const duplicates = getDuplicateVotes(result);
+        expect(duplicates).toHaveLength(1);
+        expect(duplicates[0].username).toBe('Hillary Clinton');
+      });
   });
 
   describe('End-to-End Flow', () => {

@@ -52,6 +52,7 @@ export const PollsTab: React.FC<PollsTabProps> = ({
           onChange={onPollUpload}
           disabled={!hasMemberData}
           className={styles.fileInput}
+          data-testid="file-input"
         />
         {!hasMemberData && (
           <p className={styles.warning}>

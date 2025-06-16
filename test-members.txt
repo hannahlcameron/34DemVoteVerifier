@@ -1,0 +1,26 @@
+VANID	Envelope Name  Informal	PreferredEmail
+987654321	Hillary Clinton	hrc2024@democracy.org
+987654322	Michelle Obama	mobama@progress.net
+987654323	Angela Merkel	amerkel@eu-politics.com
+987654324	Indira Gandhi	igandhi@congress.org
+987654325	Margaret Thatcher	mthatcher@parliament.uk
+987654326	Eleanor Roosevelt	eleanor@newdeal.org
+987654327	Nelson Mandela	nmandela@freedom.org
+987654328	Martin L. King Jr	mlk@civilrights.org
+987654329	Robert F. Kennedy	rfk@justice.gov
+987654330	Abraham Lincoln	honest.abe@union.org
+987654331	Bernie Sanders	bernie@progressive.org
+987654332	Elizabeth Warren	ewarren@senate.org
+987654333	Kamala Harris	kharris@california.gov
+987654334	Nancy Pelosi	nancy@house.gov
+987654335	Al Gore	agore@climate.org
+987654336	Joe Biden	joe@whitehouse.gov
+987654337	Julian Castro	jcastro@texas.org
+987654338	Amy Klobuchar	amy@midwest.gov
+987654339	Pete Buttigieg	pete@transport.gov
+987654340	Alexandria Ocasio-Cortez	aoc@greennewdeal.org
+987654341	Stacey Abrams	stacey@fairfight.org
+987654342	Beto O'Rourke	beto@texas.org
+987654343	Cory Booker	cory@newjersey.gov
+987654344	Tammy Duckworth	tammy@illinois.gov
+987654345	Gretchen Whitmer	gov@michigan.org
