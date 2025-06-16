@@ -6,6 +6,7 @@ import { TabNavigation } from "./components/TabNavigation";
 import { MembersTab } from "./components/MembersTab";
 import { PollsTab } from "./components/PollsTab";
 import { AliasesTab } from "./components/AliasesTab";
+import { AliasModal } from "./components/AliasModal";
 import { useVoteProcessing } from "./hooks/useVoteProcessing";
 import { useAliases } from "./hooks/useAliases";
 
@@ -23,9 +24,12 @@ export default function App() {
 
   const {
     aliases,
+    isModalOpen,
+    prefilledAlias,
     createAlias,
     resetAliases,
-    openAliasModal
+    openAliasModal,
+    closeAliasModal
   } = useAliases(() => {
     // Re-validate votes when aliases change
     if (pollResults.length > 0) {
@@ -110,6 +114,15 @@ export default function App() {
           />
         )}
       </div>
+
+      {/* Modal for creating aliases */}
+      <AliasModal
+        isOpen={isModalOpen}
+        onClose={closeAliasModal}
+        onCreateAlias={createAlias}
+        prefilledAlias={prefilledAlias}
+        memberData={memberData}
+      />
     </main>
   );
 }

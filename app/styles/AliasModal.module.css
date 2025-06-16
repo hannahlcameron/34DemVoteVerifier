@@ -6,11 +6,15 @@
   bottom: auto;
   transform: translate(-50%, -50%);
   width: 500px;
+  max-width: 90vw;
+  max-height: 90vh;
   padding: 20px;
   border-radius: 8px;
   background-color: white;
   outline: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: auto;
+  z-index: 1000;
 }
 
 .overlay {
@@ -85,12 +89,19 @@
   border-radius: 4px;
   margin-top: 5px;
   background-color: white;
+  display: flex;
+  flex-direction: column;
 }
 
 .memberItem {
   padding: 8px;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #333;
+  font-weight: normal;
 }
 
 .memberItem:hover {
@@ -99,6 +110,8 @@
 
 .memberItem.selected {
   background-color: #e6f3ff;
+  font-weight: 600;
+  color: #0056b3;
 }
 
 .buttonGroup {

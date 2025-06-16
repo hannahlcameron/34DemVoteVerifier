@@ -145,11 +145,14 @@ export const PollsTab: React.FC<PollsTabProps> = ({
                         columns={[
                           {
                             header: "Actions",
-                            accessorKey: "actions",
+                            id: "actions",
                             size: 100,
                             Cell: ({ row }) => (
                               <button 
-                                onClick={() => onCreateAlias(row.original.username)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onCreateAlias(row.original.username);
+                                }}
                                 className={styles.createAliasButton}
                               >
                                 Create Alias
