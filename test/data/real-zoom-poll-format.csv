@@ -1,0 +1,118 @@
+Overview
+,Meeting Topic,Meeting/Webinar ID,Actual Start Time
+2025-06-15 20:00:00,34th LD Democrats Test Meeting,12345678901,2025-06-15 19:30:00
+
+Launched Polls
+#,Poll Name,Questions,Responses
+1,Poll Question 1,1,73
+2,Poll Question 2,1,71
+3,Poll Question 3,1,68
+4,Poll Question 4,1,68
+5,"Poll Question 5, with comma",1,60
+6,Poll Question 6,1,60
+7,Poll Question 7,1,63
+8,Poll Question 8,1,65
+9,Poll Question 9,1,60
+10,Poll Question 10,1,24
+11,Poll Question 11,1,62
+12,Poll Question 12,1,62
+13,Poll Question 13,1,61
+14,Poll Question 14,1,62
+15,Poll Question 15,1,61
+16,Poll Question 16,1,53
+
+Poll Question 1
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 1?
+1,John Smith,john.smith@example.com,2025-06-15 20:01:00,"Option A",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 20:01:05,"Option B",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 20:01:10,"Option A",,
+
+Poll Question 2
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 2?
+1,John Smith,john.smith@example.com,2025-06-15 20:05:00,"Yes",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 20:05:05,"No",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 20:05:10,"Yes",,
+
+Poll Question 3
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 3?
+1,John Smith,john.smith@example.com,2025-06-15 20:10:00,"Approve",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 20:10:05,"Reject",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 20:10:10,"Approve",,
+
+Poll Question 4
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 4?
+1,John Smith,john.smith@example.com,2025-06-15 20:15:00,"Candidate A",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 20:15:05,"Candidate B",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 20:15:10,"Candidate A",,
+
+"Poll Question 5, with comma"
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 5?
+1,John Smith,john.smith@example.com,2025-06-15 20:20:00,"Option 1",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 20:20:05,"Option 2",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 20:20:10,"Option 1",,
+
+Poll Question 6
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 6?
+1,John Smith,john.smith@example.com,2025-06-15 20:25:00,"Support",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 20:25:05,"Oppose",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 20:25:10,"Support",,
+
+Poll Question 7
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 7?
+1,John Smith,john.smith@example.com,2025-06-15 20:30:00,"Yes",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 20:30:05,"No",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 20:30:10,"Yes",,
+
+Poll Question 8
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 8?
+1,John Smith,john.smith@example.com,2025-06-15 20:35:00,"Agree",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 20:35:05,"Disagree",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 20:35:10,"Agree",,
+
+Poll Question 9
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 9?
+1,John Smith,john.smith@example.com,2025-06-15 20:40:00,"Option X",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 20:40:05,"Option Y",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 20:40:10,"Option X",,
+
+Poll Question 10
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 10?
+1,John Smith,john.smith@example.com,2025-06-15 20:45:00,"For",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 20:45:05,"Against",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 20:45:10,"For",,
+
+Poll Question 11
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 11?
+1,John Smith,john.smith@example.com,2025-06-15 20:50:00,"Choice 1",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 20:50:05,"Choice 2",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 20:50:10,"Choice 1",,
+
+Poll Question 12
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 12?
+1,John Smith,john.smith@example.com,2025-06-15 20:55:00,"Yes",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 20:55:05,"No",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 20:55:10,"Yes",,
+
+Poll Question 13
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 13?
+1,John Smith,john.smith@example.com,2025-06-15 21:00:00,"Candidate X",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 21:00:05,"Candidate Y",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 21:00:10,"Candidate X",,
+
+Poll Question 14
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 14?
+1,John Smith,john.smith@example.com,2025-06-15 21:05:00,"Support",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 21:05:05,"Oppose",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 21:05:10,"Support",,
+
+Poll Question 15
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 15?
+1,John Smith,john.smith@example.com,2025-06-15 21:10:00,"Option A",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 21:10:05,"Option B",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 21:10:10,"Option A",,
+
+Poll Question 16
+#,User Name,Email Address,Submitted Date and Time,What is your response to Poll Question 16?
+1,John Smith,john.smith@example.com,2025-06-15 21:15:00,"Yes",,
+2,Jane Doe,jane.doe@example.com,2025-06-15 21:15:05,"No",,
+3,Bob Johnson,bob.johnson@example.com,2025-06-15 21:15:10,"Yes",,

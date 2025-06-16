@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { PollsTab } from '../../app/components/PollsTab';
 import { MaterialReactTable } from 'material-react-table';
 import { VoteSummary } from '../../app/components/VoteSummary';
@@ -18,10 +18,17 @@ describe('PollsTab', () => {
   const mockOnPollUpload = jest.fn();
   const mockOnCreateAlias = jest.fn();
 
+  const defaultProps = {
+    pollResults: [],
+    onPollUpload: mockOnPollUpload,
+    hasMemberData: true,
+    onCreateAlias: mockOnCreateAlias
+  };
+
   const samplePollResults = [
     {
-      name: 'Test Poll',
-      question: 'Test Question',
+      name: 'Test Poll 1',
+      question: 'Test Question 1',
       votes: [
         { username: 'user1', email: 'user1@test.com', time: '2025-06-14', choice: 'Yes' },
         { username: 'user2', email: 'user2@test.com', time: '2025-06-14', choice: 'No' }
@@ -32,14 +39,43 @@ describe('PollsTab', () => {
         duplicateVotes: [{ username: 'duplicate', email: 'duplicate@test.com', time: '2025-06-14', choice: 'Yes' }]
       },
       choiceToVotes: new Map([['Yes', 2], ['No', 1]])
+    },
+    {
+      name: 'Test Poll 2',
+      question: 'Test Question 2',
+      votes: [
+        { username: 'user3', email: 'user3@test.com', time: '2025-06-14', choice: 'Option A' },
+        { username: 'user4', email: 'user4@test.com', time: '2025-06-14', choice: 'Option B' }
+      ],
+      categorizedVotes: {
+        validVotes: [{ username: 'user3', email: 'user3@test.com', time: '2025-06-14', choice: 'Option A' }],
+        invalidVotes: [{ username: 'invalid2', email: 'invalid2@test.com', time: '2025-06-14', choice: 'Option A' }],
+        duplicateVotes: []
+      },
+      choiceToVotes: new Map([['Option A', 1], ['Option B', 1]])
+    },
+    {
+      name: 'Test Poll 3',
+      question: 'Test Question 3',
+      votes: [
+        { username: 'user5', email: 'user5@test.com', time: '2025-06-14', choice: 'Approve' },
+        { username: 'user6', email: 'user6@test.com', time: '2025-06-14', choice: 'Reject' }
+      ],
+      categorizedVotes: {
+        validVotes: [
+          { username: 'user5', email: 'user5@test.com', time: '2025-06-14', choice: 'Approve' },
+          { username: 'user6', email: 'user6@test.com', time: '2025-06-14', choice: 'Reject' }
+        ],
+        invalidVotes: [],
+        duplicateVotes: []
+      },
+      choiceToVotes: new Map([['Approve', 1], ['Reject', 1]])
     }
   ];
 
-  const defaultProps = {
-    pollResults: [],
-    onPollUpload: mockOnPollUpload,
-    hasMemberData: true,
-    onCreateAlias: mockOnCreateAlias
+  const multiplePollsProps = {
+    ...defaultProps,
+    pollResults: samplePollResults
   };
 
   beforeEach(() => {
@@ -74,12 +110,12 @@ describe('PollsTab', () => {
   });
 
   it('renders poll results', () => {
-    render(<PollsTab {...defaultProps} pollResults={samplePollResults} />);
+    render(<PollsTab {...defaultProps} pollResults={[samplePollResults[0]]} />);
     
     expect(VoteSummary).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: 'Test Poll',
-        question: 'Test Question',
+        name: 'Test Poll 1',
+        question: 'Test Question 1',
         totalVotes: 2,
         validVotes: 1,
         invalidVotes: 1,
@@ -90,7 +126,7 @@ describe('PollsTab', () => {
   });
 
   it('toggles invalid votes list', () => {
-    render(<PollsTab {...defaultProps} pollResults={samplePollResults} />);
+    render(<PollsTab {...defaultProps} pollResults={[samplePollResults[0]]} />);
     
     const invalidVotesButton = screen.getByText('Invalid Votes');
     
@@ -107,7 +143,7 @@ describe('PollsTab', () => {
   });
 
   it('toggles duplicate votes list', () => {
-    render(<PollsTab {...defaultProps} pollResults={samplePollResults} />);
+    render(<PollsTab {...defaultProps} pollResults={[samplePollResults[0]]} />);
     
     const duplicateVotesButton = screen.getByText('Duplicate Votes');
     
@@ -124,7 +160,7 @@ describe('PollsTab', () => {
   });
 
   it('handles create alias action', () => {
-    render(<PollsTab {...defaultProps} pollResults={samplePollResults} />);
+    render(<PollsTab {...defaultProps} pollResults={[samplePollResults[0]]} />);
     
     // Show invalid votes table
     fireEvent.click(screen.getByText('Invalid Votes'));
@@ -132,7 +168,7 @@ describe('PollsTab', () => {
     // Get the MaterialReactTable call arguments
     const mockTableCall = (MaterialReactTable as jest.Mock).mock.calls[0][0];
     
-    // Find the actions column
+    // Find the actions column which now contains the create alias button
     const actionsColumn = mockTableCall.columns.find((col: { accessorKey: string }) => col.accessorKey === 'actions');
     expect(actionsColumn).toBeDefined();
     
@@ -145,12 +181,12 @@ describe('PollsTab', () => {
   });
 
   it('passes correct props to VoteSummary', () => {
-    render(<PollsTab {...defaultProps} pollResults={samplePollResults} />);
+    render(<PollsTab {...defaultProps} pollResults={[samplePollResults[0]]} />);
     
     expect(VoteSummary).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: 'Test Poll',
-        question: 'Test Question',
+        name: 'Test Poll 1',
+        question: 'Test Question 1',
         choiceToVotes: samplePollResults[0].choiceToVotes,
         totalVotes: 2,
         validVotes: 1,
@@ -162,33 +198,129 @@ describe('PollsTab', () => {
   });
 
   it('renders correct table columns for invalid votes', () => {
-    render(<PollsTab {...defaultProps} pollResults={samplePollResults} />);
+    render(<PollsTab {...defaultProps} pollResults={[samplePollResults[0]]} />);
     
     fireEvent.click(screen.getByText('Invalid Votes'));
     
     const mockTableCall = (MaterialReactTable as jest.Mock).mock.calls[0][0];
     const columns = mockTableCall.columns;
     
-    expect(columns).toHaveLength(5); // Username, Email, Time, Choice, Actions
-    expect(columns[0].header).toBe('Username');
-    expect(columns[1].header).toBe('Email');
-    expect(columns[2].header).toBe('Time');
+    expect(columns).toHaveLength(4); // Actions, Username, Email, Choice
+    expect(columns[0].header).toBe('Actions');
+    expect(columns[1].header).toBe('Username');
+    expect(columns[2].header).toBe('Email');
     expect(columns[3].header).toBe('Choice');
-    expect(columns[4].header).toBe('Actions');
   });
 
   it('renders correct table columns for duplicate votes', () => {
-    render(<PollsTab {...defaultProps} pollResults={samplePollResults} />);
+    render(<PollsTab {...defaultProps} pollResults={[samplePollResults[0]]} />);
     
     fireEvent.click(screen.getByText('Duplicate Votes'));
     
     const mockTableCall = (MaterialReactTable as jest.Mock).mock.calls[0][0];
     const columns = mockTableCall.columns;
     
-    expect(columns).toHaveLength(4); // Username, Email, Time, Choice (no Actions)
+    expect(columns).toHaveLength(3); // Username, Email, Choice
     expect(columns[0].header).toBe('Username');
     expect(columns[1].header).toBe('Email');
-    expect(columns[2].header).toBe('Time');
-    expect(columns[3].header).toBe('Choice');
+    expect(columns[2].header).toBe('Choice');
+  });
+
+  // New tests for poll navigation
+  it('renders poll navigation sidebar with multiple polls', () => {
+    render(<PollsTab {...multiplePollsProps} />);
+    
+    // Check if poll navigation is rendered
+    const pollNav = screen.getByTestId('poll-navigation');
+    expect(pollNav).toBeInTheDocument();
+    
+    // Check if all poll numbers and names are in the navigation
+    expect(screen.getByText('Poll #1')).toBeInTheDocument();
+    expect(screen.getByText('Test Poll 1')).toBeInTheDocument();
+    expect(screen.getByText('Poll #2')).toBeInTheDocument();
+    expect(screen.getByText('Test Poll 2')).toBeInTheDocument();
+    expect(screen.getByText('Poll #3')).toBeInTheDocument();
+    expect(screen.getByText('Test Poll 3')).toBeInTheDocument();
+  });
+
+  it('shows vote badges in poll navigation', () => {
+    render(<PollsTab {...multiplePollsProps} />);
+    
+    // Check if poll items are displayed
+    const poll1Item = screen.getByText('Test Poll 1').closest('li');
+    const poll2Item = screen.getByText('Test Poll 2').closest('li');
+    const poll3Item = screen.getByText('Test Poll 3').closest('li');
+    
+    // Check for valid vote badges
+    expect(within(poll1Item!).getByTitle('Valid votes')).toBeInTheDocument();
+    expect(within(poll2Item!).getByTitle('Valid votes')).toBeInTheDocument();
+    expect(within(poll3Item!).getByTitle('Valid votes')).toBeInTheDocument();
+    
+    // Check for invalid vote badges
+    expect(within(poll1Item!).getByTitle('Invalid votes')).toBeInTheDocument();
+    expect(within(poll2Item!).getByTitle('Invalid votes')).toBeInTheDocument();
+    
+    // Check for duplicate vote badges
+    expect(within(poll1Item!).getByTitle('Duplicate votes')).toBeInTheDocument();
+  });
+
+  it('selects first poll by default', () => {
+    render(<PollsTab {...multiplePollsProps} />);
+    
+    // First poll should be selected by default
+    const poll1Item = screen.getByText('Test Poll 1').closest('li');
+    expect(poll1Item).toHaveClass('active');
+    
+    // First poll's content should be visible
+    expect(VoteSummary).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Test Poll 1',
+        question: 'Test Question 1'
+      }),
+      expect.any(Object)
+    );
+  });
+
+  it('changes selected poll when clicking on navigation item', () => {
+    render(<PollsTab {...multiplePollsProps} />);
+    
+    // Click on second poll
+    fireEvent.click(screen.getByText('Test Poll 2'));
+    
+    // Second poll should be selected
+    const poll2Item = screen.getByText('Test Poll 2').closest('li');
+    expect(poll2Item).toHaveClass('active');
+    
+    // Second poll's content should be visible
+    expect(VoteSummary).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Test Poll 2',
+        question: 'Test Question 2'
+      }),
+      expect.any(Object)
+    );
+  });
+
+  it('only shows the selected poll content', () => {
+    render(<PollsTab {...multiplePollsProps} />);
+    
+    // Initially first poll is selected
+    expect(VoteSummary).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Test Poll 1' }),
+      expect.any(Object)
+    );
+    
+    // Reset mock to check next call
+    (VoteSummary as jest.Mock).mockClear();
+    
+    // Click on third poll
+    fireEvent.click(screen.getByText('Test Poll 3'));
+    
+    // Only third poll should be visible
+    expect(VoteSummary).toHaveBeenCalledTimes(1);
+    expect(VoteSummary).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Test Poll 3' }),
+      expect.any(Object)
+    );
   });
 });

@@ -95,7 +95,7 @@ export function useVoteProcessing() {
       reader.readAsText(file);
     });
 
-  const processVotes = (votes: Vote[]) => {
+  const processVotes = (votes: Vote[], pollName: string = "Vote Results", question: string = "") => {
     const validationResult = validateVotes(votes, memberData);
     const duplicates = getDuplicateVotes(validationResult);
     
@@ -106,12 +106,35 @@ export function useVoteProcessing() {
     };
 
     setPollResults([{
-      name: "Vote Results",
-      question: "",
+      name: pollName,
+      question: question,
       votes: votes,
       categorizedVotes,
       choiceToVotes: summarizeVotes(categorizedVotes.validVotes)
     }]);
+  };
+
+  const processMultiplePolls = (pollResults: Array<{name: string, question: string, votes: Vote[]}>) => {
+    const processedPolls = pollResults.map(poll => {
+      const validationResult = validateVotes(poll.votes, memberData);
+      const duplicates = getDuplicateVotes(validationResult);
+      
+      const categorizedVotes = {
+        validVotes: validationResult.valid,
+        invalidVotes: validationResult.invalid,
+        duplicateVotes: duplicates
+      };
+
+      return {
+        name: poll.name,
+        question: poll.question,
+        votes: poll.votes,
+        categorizedVotes,
+        choiceToVotes: summarizeVotes(categorizedVotes.validVotes)
+      };
+    });
+
+    setPollResults(processedPolls);
   };
 
   const handlePollUpload = (input: File | Vote[]): Promise<void> => {
@@ -125,8 +148,24 @@ export function useVoteProcessing() {
       reader.onload = (e) => {
         const csv = e.target?.result as string;
         try {
-          const votes = parseVoteData(csv);
-          processVotes(votes);
+          // Import the parseCSVVotes function directly to get multiple poll results
+          const { parseCSVVotes } = require('../vote-verification');
+          const result = parseCSVVotes(csv);
+          
+          if ('error' in result) {
+            reject(new Error(result.error));
+            return;
+          }
+          
+          // If we have multiple polls, process them
+          if (Array.isArray(result) && result.length > 0) {
+            processMultiplePolls(result);
+          } else {
+            // Fallback to the old method if something goes wrong
+            const votes = parseVoteData(csv);
+            processVotes(votes);
+          }
+          
           resolve();
         } catch (error) {
           reject(error instanceof Error ? error : new Error('Failed to parse vote data'));

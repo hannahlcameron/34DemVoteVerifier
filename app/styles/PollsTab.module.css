@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  height: 100%;
 }
 
 .uploadSection {
@@ -33,12 +34,147 @@
   font-size: 14px;
 }
 
-.pollContainer {
-  margin-bottom: 30px;
-  padding: 20px;
+.pollsContent {
+  display: flex;
+  gap: 20px;
+}
+
+.pollNavigation {
+  width: 300px;
   border: 1px solid #e9ecef;
   border-radius: 8px;
   background-color: white;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.pollNavigation ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pollNavItem {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.pollNavItem:hover {
+  background-color: #f8f9fa;
+}
+
+.pollNavItem.active {
+  background-color: var(--primary-blue);
+  color: white;
+  border-left: 4px solid #0056b3;
+}
+
+.pollNavItem.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background-color: #0056b3;
+}
+
+.pollNavHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.pollNavName {
+  font-weight: 500;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.pollNumber {
+  font-size: 0.8em;
+  opacity: 0.8;
+}
+
+.pollTitle {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  position: relative;
+}
+
+.pollNavBadges {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  min-width: 24px;
+  text-align: center;
+}
+
+.badgeIcon {
+  font-size: 0.9em;
+}
+
+.validBadge {
+  background-color: #28a745;
+  color: white;
+}
+
+.duplicateBadge {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.invalidBadge {
+  background-color: #dc3545;
+  color: white;
+}
+
+.active .validBadge {
+  background-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.active .duplicateBadge {
+  background-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.active .invalidBadge {
+  background-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.pollContent {
+  flex: 1;
+}
+
+.pollContainer {
+  padding: 24px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .voteListSection {
@@ -90,7 +226,7 @@
 }
 
 .createAliasButton {
-  padding: 4px 8px;
+  padding: 6px 10px;
   background-color: var(--primary-blue);
   color: white;
   border: none;
@@ -98,10 +234,27 @@
   cursor: pointer;
   font-size: 12px;
   transition: all 0.2s ease;
+  width: 100px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .createAliasButton:hover {
   opacity: 0.9;
+  background-color: #0056b3;
+}
+
+/* Table cell styles */
+.usernameCell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  word-break: break-word;
+}
+
+.emailCell, .choiceCell {
+  word-break: break-word;
+  max-width: 250px;
 }
 
 /* MaterialReactTable customizations */
@@ -118,4 +271,15 @@
 .voteListSection :global(.MuiTableCell-head) {
   background-color: #f8f9fa;
   font-weight: 600;
+}
+
+.voteListSection :global(.MuiTableCell-root) {
+  padding: 12px;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.voteListSection :global(.MuiTableContainer-root) {
+  overflow-x: auto;
+  max-height: none !important;
 }

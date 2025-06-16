@@ -178,54 +178,192 @@ export interface PollResult {
 }
 
 /**
- * Find the vote block in a CSV file
+ * Find all vote blocks in a CSV file
  */
-export function findVoteBlock(lines: string[]): VoteBlock | null {
-  let pollTitle = "";
-  let headerIndex = -1;
+export interface PollMetadata {
+  number: number;
+  name: string;
+  questions: number;
+  responses: number;
+}
 
+export function findVoteBlocks(lines: string[]): { voteBlocks: VoteBlock[], missingPolls: string[] } {
+  const voteBlocks: VoteBlock[] = [];
+  
+  // First, find all poll names from the "Launched Polls" section
+  const pollMetadata: PollMetadata[] = [];
+  let inLaunchedPolls = false;
+  
   for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
+      
+      if (line === "Launched Polls") {
+          inLaunchedPolls = true;
+          continue;
+      }
+      
+      if (inLaunchedPolls) {
+          // Skip the header line
+          if (line.startsWith("#,Poll Name")) {
+              continue;
+          }
+          
+          // If we hit an empty line, we're done with the Launched Polls section
+          if (!line) {
+              inLaunchedPolls = false;
+              continue;
+          }
+          
+          // Parse the poll name from the line, handling quoted values that may contain commas
+          // First, check if the line starts with a number followed by a comma
+          const match = line.match(/^(\d+),\s*(.+)$/);
+          if (match) {
+              const pollNumber = parseInt(match[1].trim());
+              const remainder = match[2].trim();
+              
+              // Extract the poll name, which might be quoted and contain commas
+              let pollName = '';
+              let questions = 0;
+              let responses = 0;
+              
+              if (remainder.startsWith('"')) {
+                  // This is a quoted poll name that might contain commas
+                  const endQuoteIndex = remainder.indexOf('"', 1);
+                  if (endQuoteIndex !== -1) {
+                      // Extract the poll name without quotes
+                      pollName = remainder.substring(1, endQuoteIndex);
+                      
+                      // Extract the remaining values after the quoted poll name
+                      const restOfLine = remainder.substring(endQuoteIndex + 1).trim();
+                      const restParts = restOfLine.split(',').map(p => p.trim()).filter(p => p);
+                      
+                      if (restParts.length >= 1) questions = parseInt(restParts[0]) || 0;
+                      if (restParts.length >= 2) responses = parseInt(restParts[1]) || 0;
+                  }
+              } else {
+                  // This is a simple poll name without quotes
+                  const parts = remainder.split(',');
+                  pollName = parts[0].trim();
+                  
+                  if (parts.length >= 2) questions = parseInt(parts[1]) || 0;
+                  if (parts.length >= 3) responses = parseInt(parts[2]) || 0;
+              }
+              
+              if (pollName) {
+                  pollMetadata.push({
+                      number: pollNumber,
+                      name: pollName,
+                      questions: questions,
+                      responses: responses
+                  });
+              }
+          }
+      }
+  }
+  
+  // If we don't have any poll metadata, check if this is a simple test file format
+  // with just one poll (for backward compatibility)
+  if (pollMetadata.length === 0) {
+      for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          
+          if (line.includes("#,User Name,Email Address,Submitted Date and Time")) {
+              const headerIndex = i;
+              
+              // Look backwards to find a potential poll title
+              let pollTitle = "Unnamed Poll";
+              for (let j = i - 1; j >= 0 && j >= i - 5; j--) {
+                  const titleLine = lines[j].trim();
+                  if (titleLine && !titleLine.startsWith('#') && 
+                      titleLine !== "Overview" && titleLine !== "Launched Polls" &&
+                      !titleLine.includes("Report Generated")) {
+                      pollTitle = titleLine.split(',')[0].trim();
+                      break;
+                  }
+              }
+              
+              // Extract the question from the header line
+              const lastCommaIndex = line.lastIndexOf(',');
+              const question = lastCommaIndex !== -1 ? 
+                  line.slice(lastCommaIndex + 1).trim().replace(/^"|"$/g, '').trim() : 
+                  '';
+              
+              voteBlocks.push({
+                  title: pollTitle,
+                  headerIndex: headerIndex,
+                  question: question
+              });
+              
+              return { voteBlocks, missingPolls: [] }; // No missing polls in this case
+          }
+      }
+      
+      return { voteBlocks: [], missingPolls: [] }; // No polls found
+  }
+  
+  // Track which polls we've found
+  const foundPollNames = new Set<string>();
+  
+  // Now find each poll section in the file
+  for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Skip sections we know aren't poll data
       if (line === "Overview" || line === "Launched Polls" || line.startsWith("#,Poll Name")) {
           continue;
       }
-
-      // Look for the header line that contains the column names
-      if (line.includes("#,User Name,Email Address,Submitted Date and Time") || 
-          line.includes("#,User Name,Email Address,Submitted Date and Time,")) {
-          headerIndex = i;
-          
-          // Look backwards to find the poll title
-          for (let j = i - 1; j >= 0; j--) {
-              const titleLine = lines[j].trim();
-              if (titleLine && !titleLine.startsWith("#") && 
-                  titleLine !== "Overview" && titleLine !== "Launched Polls") {
-                  pollTitle = titleLine.split(",")[0].trim();
+      
+      // Check if this line matches a poll name from the metadata
+      // Try both with and without quotes
+      const matchingPoll = pollMetadata.find(poll => 
+          poll.name === line || 
+          `"${poll.name}"` === line
+      );
+      
+      if (matchingPoll) {
+          // Look ahead for the header line
+          let headerIndex = -1;
+          for (let j = i + 1; j < lines.length && j < i + 5; j++) {
+              const headerLine = lines[j].trim();
+              if (headerLine.includes("#,User Name,Email Address,Submitted Date and Time")) {
+                  headerIndex = j;
                   break;
               }
           }
-          if (pollTitle) {
-              break;
+          
+          if (headerIndex !== -1) {
+              // Extract the question from the header line
+              const headerLine = lines[headerIndex];
+              const lastCommaIndex = headerLine.lastIndexOf(',');
+              const question = lastCommaIndex !== -1 ? 
+                  headerLine.slice(lastCommaIndex + 1).trim().replace(/^"|"$/g, '').trim() : 
+                  '';
+              
+              voteBlocks.push({
+                  title: matchingPoll.name,
+                  headerIndex: headerIndex,
+                  question: question
+              });
+              
+              foundPollNames.add(matchingPoll.name);
           }
       }
   }
+  
+  // Check which polls are missing
+  const missingPolls = pollMetadata
+      .filter(poll => !foundPollNames.has(poll.name))
+      .map(poll => poll.name);
+  
+  return { voteBlocks, missingPolls };
+}
 
-  if (!pollTitle || headerIndex === -1) {
-      return null;
-  }
-
-  // Extract the question from the header line
-  const headerLine = lines[headerIndex];
-  const lastCommaIndex = headerLine.lastIndexOf(',');
-  const question = lastCommaIndex !== -1 ? 
-      headerLine.slice(lastCommaIndex + 1).trim().replace(/^"|"$/g, '').trim() : 
-      '';
-
-  return {
-      title: pollTitle,
-      headerIndex: headerIndex,
-      question: question
-  };
+/**
+ * Find the first vote block in a CSV file (for backward compatibility)
+ */
+export function findVoteBlock(lines: string[]): VoteBlock | null {
+  const { voteBlocks } = findVoteBlocks(lines);
+  return voteBlocks.length > 0 ? voteBlocks[0] : null;
 }
 
 /**
@@ -344,106 +482,123 @@ export function parseCSVVotes(csv: string): PollResult[] | { error: string } {
   }
 
   // Process the entire file as a single block instead of splitting by empty lines
-  // This helps with files that have a specific structure like the whitespace CSV
   const allLines = csv.split(/\r?\n/);
   
   // Find all vote blocks in the file
-  const results: PollResult[] = [];
+  const { voteBlocks, missingPolls } = findVoteBlocks(allLines);
   
-  // First, try to find the vote block header
-  const voteBlock = findVoteBlock(allLines);
-  if (!voteBlock) {
+  // If we have missing polls, report them
+  if (missingPolls.length > 0) {
+      return { 
+          error: `Could not find the following polls in the file: ${missingPolls.join(', ')}. ` +
+                 `Please check that all polls listed in the "Launched Polls" section are present in the file.` 
+      };
+  }
+  
+  if (voteBlocks.length === 0) {
       return { error: "No poll data found in the file. The file should contain poll results with a header row starting with '#'" };
   }
   
-  const { title: pollName, headerIndex, question } = voteBlock;
-  const voteLines = allLines.slice(headerIndex + 1);
+  const results: PollResult[] = [];
   
-  if (voteLines.length === 0) {
-      return { error: `No votes found in poll "${pollName}"` };
-  }
-  
-  const votes: Vote[] = [];
-  let currentLine = 0;
-  
-  while (currentLine < voteLines.length) {
-      const line = voteLines[currentLine];
+  // Process each vote block
+  for (const voteBlock of voteBlocks) {
+      const { title: pollName, headerIndex, question } = voteBlock;
       
-      // Skip empty lines or lines with just commas
-      if (!line.trim() || line.trim().replace(/,/g, '').trim() === '') {
-          currentLine++;
+      // Find the end of this vote block (either the next vote block or the end of the file)
+      let endIndex = allLines.length;
+      const nextBlockIndex = voteBlocks.findIndex(block => block.headerIndex > headerIndex);
+      if (nextBlockIndex !== -1) {
+          // If there's a next block, use its header index as our end
+          endIndex = voteBlocks[nextBlockIndex].headerIndex;
+      }
+      
+      const voteLines = allLines.slice(headerIndex + 1, endIndex);
+      
+      if (voteLines.length === 0) {
+          // Skip this poll but don't fail the entire parse
           continue;
       }
       
-      // Skip header or metadata lines
-      if (line.includes('Overview') || line.includes('Report Generated') || 
-          line.includes('Launched Polls') || line.includes('Poll Name')) {
-          currentLine++;
-          continue;
-      }
+      const votes: Vote[] = [];
+      let currentLine = 0;
       
-      // Parse the vote line
-      const fields = line.split(',');
-      
-      // Check if this is a vote line (starts with a number)
-      const voteNumber = parseInt(fields[0]);
-      if (isNaN(voteNumber)) {
-          currentLine++;
-          continue;
-      }
-      
-      // Ensure we have enough fields
-      if (fields.length < 5) {
-          currentLine++;
-          continue;
-      }
-      
-      const username = fields[1].trim();
-      const email = fields[2].trim();
-      const time = fields[3].trim();
-      
-      // Join the remaining fields as the choice (in case it contains commas)
-      // But handle trailing empty fields by filtering them out
-      const choiceFields = fields.slice(4);
-      // Remove trailing empty fields
-      while (choiceFields.length > 0 && choiceFields[choiceFields.length - 1].trim() === '') {
-          choiceFields.pop();
-      }
-      const choice = choiceFields.join(',').trim();
-      
-      if (!username || !email || !time || !choice) {
-          const missing = [];
-          if (!username) missing.push("name");
-          if (!email) missing.push("email");
-          if (!time) missing.push("time");
-          if (!choice) missing.push("choice");
+      while (currentLine < voteLines.length) {
+          const line = voteLines[currentLine];
           
-          // Skip this line if it's missing data, but don't fail the entire parse
+          // Skip empty lines or lines with just commas
+          if (!line.trim() || line.trim().replace(/,/g, '').trim() === '') {
+              currentLine++;
+              continue;
+          }
+          
+          // Skip header or metadata lines
+          if (line.includes('Overview') || line.includes('Report Generated') || 
+              line.includes('Launched Polls') || line.includes('Poll Name') ||
+              line.includes('#,User Name,Email Address,Submitted Date and Time')) {
+              currentLine++;
+              continue;
+          }
+          
+          // Parse the vote line
+          const fields = line.split(',');
+          
+          // Check if this is a vote line (starts with a number)
+          const voteNumber = parseInt(fields[0]);
+          if (isNaN(voteNumber)) {
+              currentLine++;
+              continue;
+          }
+          
+          // Ensure we have enough fields
+          if (fields.length < 5) {
+              currentLine++;
+              continue;
+          }
+          
+          const username = fields[1].trim();
+          const email = fields[2].trim();
+          const time = fields[3].trim();
+          
+          // Join the remaining fields as the choice (in case it contains commas)
+          // But handle trailing empty fields by filtering them out
+          const choiceFields = fields.slice(4);
+          // Remove trailing empty fields
+          while (choiceFields.length > 0 && choiceFields[choiceFields.length - 1].trim() === '') {
+              choiceFields.pop();
+          }
+          const choice = choiceFields.join(',').trim();
+          
+          if (!username || !email || !time || !choice) {
+              // Skip this line if it's missing data, but don't fail the entire parse
+              currentLine++;
+              continue;
+          }
+          
+          votes.push({
+              username,
+              email,
+              time,
+              choice
+          });
+          
           currentLine++;
-          continue;
       }
       
-      votes.push({
-          username,
-          email,
-          time,
-          choice
-      });
-      
-      currentLine++;
+      if (votes.length > 0) {
+          results.push({
+              name: pollName,
+              question: question,
+              votes: votes,
+              validationResult: { valid: [], invalid: [] },
+              choiceToVotes: new Map()
+          });
+      }
   }
   
-  if (votes.length === 0) {
-      return { error: `No valid votes found in poll "${pollName}". Please check the data format.` };
+  if (results.length === 0) {
+      return { error: "No valid votes found in any polls. Please check the data format." };
   }
-  
-  results.push({
-      name: pollName,
-      question: question,
-      votes: votes,
-      validationResult: { valid: [], invalid: [] },
-      choiceToVotes: new Map()
-  });
   
   return results;
 }

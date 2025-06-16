@@ -57,12 +57,24 @@ export const VoteSummary: React.FC<VoteSummaryProps> = ({
       </div>
 
       <div className={styles.statsContainer}>
-        <p className={styles.stats}>
-          There were <b>{totalVotes}</b> total votes,{" "}
-          <b>{validVotes}</b> valid votes,{" "}
-          <b>{invalidVotes}</b> invalid votes, and{" "}
-          <b>{duplicateVotes}</b> duplicates
-        </p>
+        <div className={styles.stats}>
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Total Votes</span>
+            <span className={`${styles.statValue} ${styles.totalVotes}`}>{totalVotes}</span>
+          </div>
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Valid Votes</span>
+            <span className={`${styles.statValue} ${styles.validVotes}`}>{validVotes}</span>
+          </div>
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Invalid Votes</span>
+            <span className={`${styles.statValue} ${styles.invalidVotes}`}>{invalidVotes}</span>
+          </div>
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Duplicates</span>
+            <span className={`${styles.statValue} ${styles.duplicateVotes}`}>{duplicateVotes}</span>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -72,14 +72,58 @@
 }
 
 .statsContainer {
-  margin-top: 20px;
+  margin-top: 24px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e9ecef;
 }
 
 .stats {
   color: #555;
-  line-height: 1.5;
+  line-height: 1.6;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
 }
 
-.stats b {
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  min-width: 100px;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.statLabel {
+  font-size: 0.85em;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.statValue {
+  font-size: 1.5em;
+  font-weight: 600;
   color: #333;
+}
+
+.totalVotes {
+  color: var(--primary-blue);
+}
+
+.validVotes {
+  color: #28a745;
+}
+
+.invalidVotes {
+  color: #dc3545;
+}
+
+.duplicateVotes {
+  color: #ffc107;
 }

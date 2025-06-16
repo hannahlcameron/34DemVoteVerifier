@@ -40,11 +40,18 @@ describe('VoteSummary', () => {
   it('displays vote statistics correctly', () => {
     render(<VoteSummary {...defaultProps} />);
     
-    const statsText = screen.getByText(/There were/);
-    expect(statsText).toHaveTextContent('105');  // total votes
-    expect(statsText).toHaveTextContent('100');  // valid votes
-    expect(statsText).toHaveTextContent('3');    // invalid votes
-    expect(statsText).toHaveTextContent('2');    // duplicate votes
+    // Check for the stat items with their values
+    expect(screen.getByText('Total Votes')).toBeInTheDocument();
+    expect(screen.getByText('105')).toBeInTheDocument();
+    
+    expect(screen.getByText('Valid Votes')).toBeInTheDocument();
+    expect(screen.getByText('100')).toBeInTheDocument();
+    
+    expect(screen.getByText('Invalid Votes')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+    
+    expect(screen.getByText('Duplicates')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
   });
 
   it('renders vote chart with correct percentages', () => {

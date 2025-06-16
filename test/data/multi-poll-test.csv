@@ -1,0 +1,40 @@
+Overview
+,Meeting Topic,Meeting/Webinar ID,Actual Start Time
+2025-06-15 10:00:00,34th LD Democrats Test Meeting,12345678901,2025-06-15 10:00:00
+
+Launched Polls
+#,Poll Name,Questions,Responses
+1,City Council Position 1,1,5
+2,City Council Position 2,1,4
+3,Mayor Race,1,6
+4,"School Board, District 3",1,3
+
+City Council Position 1
+#,User Name,Email Address,Submitted Date and Time,Who do you support for City Council Position 1?
+1,Jane Smith,jane.smith@example.com,2025-06-15 10:15:00,Sarah Johnson,,
+2,John Doe,john.doe@example.com,2025-06-15 10:15:30,Michael Williams,,
+3,Emily Brown,emily.brown@example.com,2025-06-15 10:16:00,Sarah Johnson,,
+4,Robert Wilson,robert.wilson@example.com,2025-06-15 10:16:30,David Martinez,,
+5,Lisa Garcia,lisa.garcia@example.com,2025-06-15 10:17:00,Sarah Johnson,,
+
+City Council Position 2
+#,User Name,Email Address,Submitted Date and Time,Who do you support for City Council Position 2?
+1,Jane Smith,jane.smith@example.com,2025-06-15 10:20:00,Jennifer Lee,,
+2,John Doe,john.doe@example.com,2025-06-15 10:20:30,Thomas Anderson,,
+3,Emily Brown,emily.brown@example.com,2025-06-15 10:21:00,Jennifer Lee,,
+4,Robert Wilson,robert.wilson@example.com,2025-06-15 10:21:30,Thomas Anderson,,
+
+Mayor Race
+#,User Name,Email Address,Submitted Date and Time,Who do you support for Mayor?
+1,Jane Smith,jane.smith@example.com,2025-06-15 10:25:00,Elizabeth Taylor,,
+2,John Doe,john.doe@example.com,2025-06-15 10:25:30,James Rodriguez,,
+3,Emily Brown,emily.brown@example.com,2025-06-15 10:26:00,Elizabeth Taylor,,
+4,Robert Wilson,robert.wilson@example.com,2025-06-15 10:26:30,James Rodriguez,,
+5,Lisa Garcia,lisa.garcia@example.com,2025-06-15 10:27:00,Elizabeth Taylor,,
+6,Mark Johnson,mark.johnson@example.com,2025-06-15 10:27:30,Carlos Sanchez,,
+
+"School Board, District 3"
+#,User Name,Email Address,Submitted Date and Time,Who do you support for School Board District 3?
+1,Jane Smith,jane.smith@example.com,2025-06-15 10:30:00,Patricia Miller,,
+2,John Doe,john.doe@example.com,2025-06-15 10:30:30,Kevin Wilson,,
+3,Emily Brown,emily.brown@example.com,2025-06-15 10:31:00,Patricia Miller,,

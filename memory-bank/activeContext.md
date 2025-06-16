@@ -14,6 +14,26 @@
 - Fixed edge case handling in CSV parsing
 - Improved component resilience for zero-value states
 
+### Multi-Poll Support Enhancement (June 15, 2025)
+- Improved parsing of multiple polls from Zoom CSV files
+- Enhanced handling of poll names with commas in quotes
+- Added validation to ensure all polls from "Launched Polls" section are found
+- Created test data with multiple polls for testing
+- Implemented integration tests for multi-poll verification
+- Enhanced UI for navigating between multiple polls
+
+### UI Improvements (June 15, 2025)
+- Redesigned poll navigation sidebar with tab-like interface
+- Added clear poll numbering alongside poll names
+- Improved poll name display with proper truncation and ellipsis
+- Moved vote count badges to the header line for better space utilization
+- Enhanced vote tables with better text wrapping and scrolling
+- Removed unnecessary time column from vote tables
+- Made "Create Alias" button a uniform first column for better accessibility
+- Added proper table cell styling for better readability
+- Fixed scrolling issues to eliminate nested scrolling
+- Improved overall page layout for better usability
+
 ### Current Component Structure
 - TabNavigation: Main navigation and tab management
 - MembersTab: Member data management
@@ -47,6 +67,8 @@
 - Optimizing state updates
 - Improving error handling
 - Maintaining consistent styling
+- Enhancing user experience for multi-poll navigation
+- Ensuring robust parsing of complex CSV formats
 
 ## Recent Learnings
 1. Component Design
@@ -67,6 +89,15 @@
    - Proper error propagation
    - Type-safe error handling
 
+4. Multi-Poll Support
+   - Tab-like sidebar navigation improves usability for multiple polls
+   - Robust parsing of multiple polls from a single CSV file
+   - Handling poll names with commas in quotes
+   - Validating all polls from "Launched Polls" section are found
+   - Maintaining poll context when displaying results
+   - Enhanced vote statistics visualization with color-coded metrics
+   - Test-driven development for new features
+
 ## Next Steps
 1. Performance
    - Monitor component rerenders
@@ -74,11 +105,16 @@
    - Improve load times
    - Reduce bundle size
 
-3. Documentation
+2. Documentation
    - Update component documentation
    - Document state management patterns
    - Maintain style guide
    - Document error handling
+
+3. Test Data
+   - Never use real names from example files in test data
+   - Always create fictional names and email addresses for test data
+   - Randomize voter IDs in test data
 
 ## Active Decisions
 1. Component Structure
