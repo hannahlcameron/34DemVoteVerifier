@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 import styles from '../styles/AliasModal.module.css';
 import { type Member } from '../vote-verification';
@@ -19,7 +19,14 @@ export const AliasModal: React.FC<AliasModalProps> = ({
   memberData
 }) => {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [aliasName, setAliasName] = useState(prefilledAlias);
+  const [aliasName, setAliasName] = useState('');
+  
+  // Update aliasName when prefilledAlias changes
+  useEffect(() => {
+    if (prefilledAlias) {
+      setAliasName(prefilledAlias);
+    }
+  }, [prefilledAlias]);
   const [memberSearch, setMemberSearch] = useState('');
 
   const handleCreateAlias = () => {

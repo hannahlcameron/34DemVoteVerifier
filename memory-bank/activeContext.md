@@ -34,6 +34,13 @@
 - Fixed scrolling issues to eliminate nested scrolling
 - Improved overall page layout for better usability
 
+### Vote Verification Bug Fix (June 15, 2025)
+- Fixed bug in vote matching logic to allow matching on email only
+- Updated `matchesMember` function to check for email matches in addition to name matches
+- Added comprehensive test suite for email matching functionality
+- Updated existing tests to account for new email matching behavior
+- Ensured backward compatibility with existing test cases
+
 ### Current Component Structure
 - TabNavigation: Main navigation and tab management
 - MembersTab: Member data management
@@ -99,17 +106,11 @@
    - Test-driven development for new features
 
 ## Next Steps
-1. Performance
-   - Monitor component rerenders
-   - Optimize state updates
-   - Improve load times
-   - Reduce bundle size
+1. Show all votes
+- We want to click on the big valid, invalid, or duplicate votes, or even total votes, and see all votes in a table. Instead of just having an expandy bit for invalid votes
 
-2. Documentation
-   - Update component documentation
-   - Document state management patterns
-   - Maintain style guide
-   - Document error handling
+2. A way to remember an invalid person, and stop prompting.
+
 
 3. Test Data
    - Never use real names from example files in test data

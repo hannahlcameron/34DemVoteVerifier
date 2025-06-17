@@ -82,26 +82,6 @@ export const PollsTab: React.FC<PollsTabProps> = ({
                 >
                   <div className={styles.pollNavHeader}>
                     <span className={styles.pollNumber}>Poll #{index + 1}</span>
-                    <div className={styles.pollNavBadges}>
-                    {poll.categorizedVotes.validVotes.length > 0 && (
-                      <span className={`${styles.badge} ${styles.validBadge}`} title="Valid votes">
-                        <span className={styles.badgeIcon}>✓</span>
-                        {poll.categorizedVotes.validVotes.length}
-                      </span>
-                    )}
-                    {poll.categorizedVotes.duplicateVotes.length > 0 && (
-                      <span className={`${styles.badge} ${styles.duplicateBadge}`} title="Duplicate votes">
-                        <span className={styles.badgeIcon}>⚠</span>
-                        {poll.categorizedVotes.duplicateVotes.length}
-                      </span>
-                    )}
-                    {poll.categorizedVotes.invalidVotes.length > 0 && (
-                      <span className={`${styles.badge} ${styles.invalidBadge}`} title="Invalid votes">
-                        <span className={styles.badgeIcon}>✗</span>
-                        {poll.categorizedVotes.invalidVotes.length}
-                      </span>
-                    )}
-                    </div>
                   </div>
                   <div className={styles.pollNavName}>
                     <span className={styles.pollTitle}>{poll.name}</span>

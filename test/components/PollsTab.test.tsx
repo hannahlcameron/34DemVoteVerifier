@@ -169,7 +169,7 @@ describe('PollsTab', () => {
     const mockTableCall = (MaterialReactTable as jest.Mock).mock.calls[0][0];
     
     // Find the actions column which now contains the create alias button
-    const actionsColumn = mockTableCall.columns.find((col: { accessorKey: string }) => col.accessorKey === 'actions');
+    const actionsColumn = mockTableCall.columns.find((col: any) => col.id === 'actions' || col.accessorKey === 'actions');
     expect(actionsColumn).toBeDefined();
     
     // Simulate clicking create alias button
@@ -243,7 +243,7 @@ describe('PollsTab', () => {
     expect(screen.getByText('Test Poll 3')).toBeInTheDocument();
   });
 
-  it('shows vote badges in poll navigation', () => {
+  it('displays poll items without badges', () => {
     render(<PollsTab {...multiplePollsProps} />);
     
     // Check if poll items are displayed
@@ -251,17 +251,15 @@ describe('PollsTab', () => {
     const poll2Item = screen.getByText('Test Poll 2').closest('li');
     const poll3Item = screen.getByText('Test Poll 3').closest('li');
     
-    // Check for valid vote badges
-    expect(within(poll1Item!).getByTitle('Valid votes')).toBeInTheDocument();
-    expect(within(poll2Item!).getByTitle('Valid votes')).toBeInTheDocument();
-    expect(within(poll3Item!).getByTitle('Valid votes')).toBeInTheDocument();
+    // Verify poll items exist
+    expect(poll1Item).toBeInTheDocument();
+    expect(poll2Item).toBeInTheDocument();
+    expect(poll3Item).toBeInTheDocument();
     
-    // Check for invalid vote badges
-    expect(within(poll1Item!).getByTitle('Invalid votes')).toBeInTheDocument();
-    expect(within(poll2Item!).getByTitle('Invalid votes')).toBeInTheDocument();
-    
-    // Check for duplicate vote badges
-    expect(within(poll1Item!).getByTitle('Duplicate votes')).toBeInTheDocument();
+    // Verify poll numbers are displayed
+    expect(within(poll1Item!).getByText('Poll #1')).toBeInTheDocument();
+    expect(within(poll2Item!).getByText('Poll #2')).toBeInTheDocument();
+    expect(within(poll3Item!).getByText('Poll #3')).toBeInTheDocument();
   });
 
   it('selects first poll by default', () => {

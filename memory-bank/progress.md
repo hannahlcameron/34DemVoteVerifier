@@ -41,6 +41,13 @@
 - Fixed scrolling issues to eliminate nested scrolling
 - Improved overall page layout for better usability
 
+✅ Vote Verification Bug Fix (June 15, 2025)
+- Fixed bug in vote matching logic to allow matching on email only
+- Updated matchesMember function to check for email matches
+- Added comprehensive test suite for email matching functionality
+- Updated existing tests to account for new email matching behavior
+- Ensured backward compatibility with existing test cases
+
 ✅ State Management
 - Custom hooks for vote processing
 - Custom hooks for alias management

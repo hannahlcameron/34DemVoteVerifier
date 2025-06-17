@@ -127,10 +127,12 @@ describe('Vote Verification Flow', () => {
       expect(result.valid).toHaveLength(25); // All votes should be valid since we used same names
     });
 
-    test('should identify invalid votes when names dont match', () => {
-      // Modify some votes to have non-matching names
+    test('should identify invalid votes when neither names nor emails match', () => {
+      // Modify some votes to have non-matching names and emails
       votes[0].username = 'Unknown Person';
+      votes[0].email = 'unknown@example.com'; // Change email to non-matching
       votes[1].username = 'Another Unknown';
+      votes[1].email = 'another@example.com'; // Change email to non-matching
       
       const result = validateVotes(votes, members);
       expect(result.invalid).toHaveLength(2);

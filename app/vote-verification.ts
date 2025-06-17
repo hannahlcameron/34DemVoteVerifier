@@ -34,17 +34,22 @@ export function parseMemberList(content: string): Member[] {
     // Handle both formats
     if (fields.length >= 6) {
       // Full format: VANID, Last, First, Mid, Suf, PreferredEmail
+      const firstName = fields[2] || '';
+      const lastName = fields[1] || '';
+      // Combine First and Last name, handling potential empty fields
+      const fullName = [firstName, lastName].filter(Boolean).join(' ');
+      
       members.push({
         vanId: fields[0],
-        name: [fields[2], fields[1]].filter(Boolean).join(' '), // First Last
-        preferredEmail: fields[5]
+        name: fullName,
+        preferredEmail: fields[5] || ''
       });
     } else if (fields.length >= 3) {
       // Simple format: VANID, Name, Email
       members.push({
         vanId: fields[0],
-        name: fields[1],
-        preferredEmail: fields[2]
+        name: fields[1] || '',
+        preferredEmail: fields[2] || ''
       });
     }
   }
@@ -76,19 +81,37 @@ export function addAlias(vanId: string, alias: string) {
 }
 
 /**
- * Check if a name matches a member, including aliases
+ * Check if a vote matches a member, including aliases and email
  */
 function matchesMember(vote: Vote, member: Member): boolean {
   const voteName = vote.username.toLowerCase();
   const memberName = member.name.toLowerCase();
+  const voteEmail = vote.email.toLowerCase();
+  const memberEmail = member.preferredEmail.toLowerCase();
   
-  // Direct name match
-  if (voteName === memberName) return true;
+  // Debug logging
+  console.log(`Checking match for vote: ${voteName} (${voteEmail}) against member: ${memberName} (${memberEmail})`);
   
-  // Alias match
+  // Check for email match first - if emails exist and match
+  if (memberEmail && voteEmail && voteEmail === memberEmail) {
+    console.log(`✅ Email match: ${voteEmail} === ${memberEmail}`);
+    return true;
+  }
+
+  // Check for name match
+  if (voteName === memberName) {
+    console.log(`✅ Name match: ${voteName} === ${memberName}`);
+    return true;
+  }
+
+  // Check for alias match
   const memberAliases = aliases.get(member.vanId);
-  if (memberAliases?.has(voteName)) return true;
+  if (memberAliases?.has(voteName)) {
+    console.log(`✅ Alias match: ${voteName} is an alias for ${memberName}`);
+    return true;
+  }
   
+  console.log(`❌ No match for vote: ${voteName} (${voteEmail}) against member: ${memberName} (${memberEmail})`);
   return false;
 }
 
