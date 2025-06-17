@@ -21,9 +21,41 @@ const aliases = new Map<string, Set<string>>();
 
 /**
  * Parse a membership list file (both full and simplified formats)
+ * Handles UTF-16 encoding issues automatically
  */
 export function parseMemberList(content: string): Member[] {
-  const lines = content.split('\n').filter(line => line.trim());
+  // Handle UTF-16 encoding issues where extra spaces appear between characters
+  // This happens when UTF-16 files are read as UTF-8
+  let cleanedContent = content;
+  
+  // Check if content has the UTF-16 pattern (spaces between every character)
+  // Look for pattern like "V A N I D" or similar spaced-out text
+  // More conservative detection to avoid false positives
+  const firstLine = content.split('\n')[0] || '';
+  const hasUTF16Pattern = firstLine.includes(' A N I D ') || 
+                          firstLine.includes(' a m e ') ||
+                          firstLine.includes(' N a m e ') ||
+                          /([A-Za-z]\s){5,}/.test(firstLine);
+  
+  if (hasUTF16Pattern) {
+    // Remove extra spaces between characters but preserve tabs and newlines
+    cleanedContent = content
+      .split('\n')
+      .map(line => {
+        // Split by tabs first to preserve field structure
+        const parts = line.split('\t');
+        return parts.map(part => {
+          // Remove spaces between characters within each field, but preserve word boundaries
+          // This handles "R o b e r t   S m i t h" -> "Robert Smith"
+          const cleaned = part.replace(/([^\s])\s(?=[^\s])/g, '$1');
+          // Normalize multiple spaces to single spaces and trim
+          return cleaned.replace(/\s+/g, ' ').trim();
+        }).join('\t');
+      })
+      .join('\n');
+  }
+  
+  const lines = cleanedContent.split('\n').filter(line => line.trim());
   const members: Member[] = [];
   
   // Skip header
@@ -39,18 +71,22 @@ export function parseMemberList(content: string): Member[] {
       // Combine First and Last name, handling potential empty fields
       const fullName = [firstName, lastName].filter(Boolean).join(' ');
       
-      members.push({
-        vanId: fields[0],
-        name: fullName,
-        preferredEmail: fields[5] || ''
-      });
+      const member = {
+        vanId: (fields[0] || '').trim(),
+        name: fullName.trim(),
+        preferredEmail: (fields[5] || '').trim()
+      };
+      
+      members.push(member);
     } else if (fields.length >= 3) {
       // Simple format: VANID, Name, Email
-      members.push({
-        vanId: fields[0],
-        name: fields[1] || '',
-        preferredEmail: fields[2] || ''
-      });
+      const member = {
+        vanId: (fields[0] || '').trim(),
+        name: (fields[1] || '').trim(),
+        preferredEmail: (fields[2] || '').trim()
+      };
+      
+      members.push(member);
     }
   }
   
@@ -89,29 +125,22 @@ function matchesMember(vote: Vote, member: Member): boolean {
   const voteEmail = vote.email.toLowerCase();
   const memberEmail = member.preferredEmail.toLowerCase();
   
-  // Debug logging
-  console.log(`Checking match for vote: ${voteName} (${voteEmail}) against member: ${memberName} (${memberEmail})`);
-  
   // Check for email match first - if emails exist and match
   if (memberEmail && voteEmail && voteEmail === memberEmail) {
-    console.log(`✅ Email match: ${voteEmail} === ${memberEmail}`);
     return true;
   }
 
   // Check for name match
   if (voteName === memberName) {
-    console.log(`✅ Name match: ${voteName} === ${memberName}`);
     return true;
   }
 
   // Check for alias match
   const memberAliases = aliases.get(member.vanId);
   if (memberAliases?.has(voteName)) {
-    console.log(`✅ Alias match: ${voteName} is an alias for ${memberName}`);
     return true;
   }
   
-  console.log(`❌ No match for vote: ${voteName} (${voteEmail}) against member: ${memberName} (${memberEmail})`);
   return false;
 }
 

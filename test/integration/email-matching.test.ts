@@ -110,4 +110,73 @@ describe('Email Matching Tests', () => {
     expect(result.valid).toHaveLength(2);
     expect(result.invalid).toHaveLength(1);
   });
+
+  test('should match Donald/Don scenario with same email', () => {
+    // Create member with full name
+    const members: Member[] = [
+      {
+        vanId: '555666',
+        name: 'Donald Trump',
+        preferredEmail: 'donald@example.com'
+      }
+    ];
+
+    // Vote with shortened name but same email
+    const votes: Vote[] = [
+      {
+        username: 'Don Trump', // Shortened first name
+        email: 'donald@example.com', // Same email
+        time: '2025-06-15 12:00:00',
+        choice: 'Yes'
+      }
+    ];
+    
+    const result = validateVotes(votes, members);
+    expect(result.valid).toHaveLength(1);
+    expect(result.invalid).toHaveLength(0);
+    expect(result.valid[0].username).toBe('Don Trump');
+  });
+
+  test('should handle member list with trailing whitespace and newlines', () => {
+    // Simulate member list content with trailing whitespace/newlines (the actual bug)
+    const memberListContent = `VANID\tName\tEmail
+123456\tDonald Brubeck\td2brubeck@gmail.com\n
+789012\tJane Smith\tjane@example.com \n
+999888\tBob Wilson\tbob@example.com\t\n`;
+
+    const members = parseMemberList(memberListContent);
+    
+    // Verify members are parsed correctly with trimmed fields
+    expect(members).toHaveLength(3);
+    expect(members[0]).toEqual({
+      vanId: '123456',
+      name: 'Donald Brubeck',
+      preferredEmail: 'd2brubeck@gmail.com' // Should be trimmed, no newline
+    });
+    expect(members[1]).toEqual({
+      vanId: '789012',
+      name: 'Jane Smith',
+      preferredEmail: 'jane@example.com' // Should be trimmed, no trailing space
+    });
+    expect(members[2]).toEqual({
+      vanId: '999888',
+      name: 'Bob Wilson',
+      preferredEmail: 'bob@example.com' // Should be trimmed
+    });
+
+    // Now test that Don Brubeck vote matches Donald Brubeck member
+    const votes: Vote[] = [
+      {
+        username: 'Don Brubeck', // Different name
+        email: 'd2brubeck@gmail.com', // Same email (no trailing whitespace)
+        time: '2025-06-15 18:50:30',
+        choice: 'Yes'
+      }
+    ];
+    
+    const result = validateVotes(votes, members);
+    expect(result.valid).toHaveLength(1);
+    expect(result.invalid).toHaveLength(0);
+    expect(result.valid[0].username).toBe('Don Brubeck');
+  });
 });
