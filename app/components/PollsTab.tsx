@@ -31,8 +31,8 @@ export const PollsTab: React.FC<PollsTabProps> = ({
   hasMemberData,
   onCreateAlias
 }) => {
-  const [expandedVotes, setExpandedVotes] = useState<{[key: string]: {invalid: boolean, duplicate: boolean}}>({});
   const [selectedPollIndex, setSelectedPollIndex] = useState<number>(0);
+  const [selectedVoteView, setSelectedVoteView] = useState<'total' | 'valid' | 'invalid' | 'duplicate' | null>(null);
 
   // Reset selected poll when poll results change
   useEffect(() => {
@@ -41,14 +41,31 @@ export const PollsTab: React.FC<PollsTabProps> = ({
     }
   }, [pollResults]);
 
-  const toggleVoteList = (pollName: string, type: 'invalid' | 'duplicate') => {
-    setExpandedVotes(prev => ({
-      ...prev,
-      [pollName]: {
-        ...prev[pollName] || {},
-        [type]: !(prev[pollName]?.[type] ?? false)
-      }
-    }));
+  const handleViewVotes = (category: 'total' | 'valid' | 'invalid' | 'duplicate') => {
+    setSelectedVoteView(selectedVoteView === category ? null : category);
+  };
+
+  const getCurrentVotes = () => {
+    if (!pollResults[selectedPollIndex] || !selectedVoteView) return [];
+    
+    const poll = pollResults[selectedPollIndex];
+    switch (selectedVoteView) {
+      case 'total':
+        return poll.votes;
+      case 'valid':
+        return poll.categorizedVotes.validVotes;
+      case 'invalid':
+        return poll.categorizedVotes.invalidVotes;
+      case 'duplicate':
+        return poll.categorizedVotes.duplicateVotes;
+      default:
+        return [];
+    }
+  };
+
+  const getTableTitle = () => {
+    if (!selectedVoteView) return '';
+    return `${selectedVoteView.charAt(0).toUpperCase() + selectedVoteView.slice(1)} Votes`;
   };
 
   return (
@@ -103,135 +120,77 @@ export const PollsTab: React.FC<PollsTabProps> = ({
                   validVotes={pollResults[selectedPollIndex].categorizedVotes.validVotes.length}
                   invalidVotes={pollResults[selectedPollIndex].categorizedVotes.invalidVotes.length}
                   duplicateVotes={pollResults[selectedPollIndex].categorizedVotes.duplicateVotes.length}
+                  onViewVotes={handleViewVotes}
                 />
 
-                {pollResults[selectedPollIndex].categorizedVotes.invalidVotes.length > 0 && (
-                  <div className={styles.voteListSection}>
-                    <button
-                      onClick={() => toggleVoteList(pollResults[selectedPollIndex].name, 'invalid')}
-                      className={`${styles.toggleButton} ${expandedVotes[pollResults[selectedPollIndex].name]?.invalid ? styles.active : ''}`}
-                    >
-                      <span>Invalid Votes</span>
-                      <span className={styles.count}>
-                        {pollResults[selectedPollIndex].categorizedVotes.invalidVotes.length}
-                      </span>
-                      <span className={`${styles.arrow} ${expandedVotes[pollResults[selectedPollIndex].name]?.invalid ? styles.up : ''}`}>
-                        ▼
-                      </span>
-                    </button>
-
-                    {expandedVotes[pollResults[selectedPollIndex].name]?.invalid && (
-                      <MaterialReactTable
-                        columns={[
-                          {
-                            header: "Actions",
-                            id: "actions",
-                            size: 100,
-                            Cell: ({ row }) => (
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onCreateAlias(row.original.username);
-                                }}
-                                className={styles.createAliasButton}
-                              >
-                                Create Alias
-                              </button>
-                            )
-                          },
-                          {
-                            header: "Username",
-                            accessorKey: "username",
-                            Cell: ({ cell }) => (
-                              <div className={styles.usernameCell}>
-                                {cell.getValue() as string}
-                              </div>
-                            )
-                          },
-                          { 
-                            header: "Email", 
-                            accessorKey: "email",
-                            Cell: ({ cell }) => (
-                              <div className={styles.emailCell}>
-                                {cell.getValue() as string}
-                              </div>
-                            )
-                          },
-                          { 
-                            header: "Choice", 
-                            accessorKey: "choice",
-                            Cell: ({ cell }) => (
-                              <div className={styles.choiceCell}>
-                                {cell.getValue() as string}
-                              </div>
-                            )
-                          }
-                        ]}
-                        data={pollResults[selectedPollIndex].categorizedVotes.invalidVotes}
-                        enableColumnResizing
-                        layoutMode="grid"
-                        muiTableContainerProps={{ 
-                          sx: { maxHeight: '400px' } 
-                        }}
-                      />
-                    )}
-                  </div>
-                )}
-
-                {pollResults[selectedPollIndex].categorizedVotes.duplicateVotes.length > 0 && (
-                  <div className={styles.voteListSection}>
-                    <button
-                      onClick={() => toggleVoteList(pollResults[selectedPollIndex].name, 'duplicate')}
-                      className={`${styles.toggleButton} ${expandedVotes[pollResults[selectedPollIndex].name]?.duplicate ? styles.active : ''}`}
-                    >
-                      <span>Duplicate Votes</span>
-                      <span className={styles.count}>
-                        {pollResults[selectedPollIndex].categorizedVotes.duplicateVotes.length}
-                      </span>
-                      <span className={`${styles.arrow} ${expandedVotes[pollResults[selectedPollIndex].name]?.duplicate ? styles.up : ''}`}>
-                        ▼
-                      </span>
-                    </button>
-
-                    {expandedVotes[pollResults[selectedPollIndex].name]?.duplicate && (
-                      <MaterialReactTable
-                        columns={[
-                          { 
-                            header: "Username", 
-                            accessorKey: "username",
-                            Cell: ({ cell }) => (
-                              <div className={styles.usernameCell}>
-                                {cell.getValue() as string}
-                              </div>
-                            )
-                          },
-                          { 
-                            header: "Email", 
-                            accessorKey: "email",
-                            Cell: ({ cell }) => (
-                              <div className={styles.emailCell}>
-                                {cell.getValue() as string}
-                              </div>
-                            )
-                          },
-                          { 
-                            header: "Choice", 
-                            accessorKey: "choice",
-                            Cell: ({ cell }) => (
-                              <div className={styles.choiceCell}>
-                                {cell.getValue() as string}
-                              </div>
-                            )
-                          }
-                        ]}
-                        data={pollResults[selectedPollIndex].categorizedVotes.duplicateVotes}
-                        enableColumnResizing
-                        layoutMode="grid"
-                        muiTableContainerProps={{ 
-                          sx: { maxHeight: '400px' } 
-                        }}
-                      />
-                    )}
+                {selectedVoteView && (
+                  <div className={styles.voteTableSection}>
+                    <div className={styles.tableHeader}>
+                      <h3 className={styles.tableTitle}>{getTableTitle()}</h3>
+                      <button
+                        onClick={() => setSelectedVoteView(null)}
+                        className={styles.closeButton}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    
+                    <MaterialReactTable
+                      columns={[
+                        ...(selectedVoteView === 'invalid' ? [{
+                          header: "Actions",
+                          id: "actions",
+                          size: 100,
+                          Cell: ({ row }: any) => (
+                            <button 
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                onCreateAlias(row.original.username);
+                              }}
+                              className={styles.createAliasButton}
+                            >
+                              Create Alias
+                            </button>
+                          )
+                        }] : []),
+                        {
+                          header: "Username",
+                          accessorKey: "username",
+                          Cell: ({ cell }: any) => (
+                            <div className={styles.usernameCell}>
+                              {cell.getValue() as string}
+                            </div>
+                          )
+                        },
+                        { 
+                          header: "Email", 
+                          accessorKey: "email",
+                          Cell: ({ cell }: any) => (
+                            <div className={styles.emailCell}>
+                              {cell.getValue() as string}
+                            </div>
+                          )
+                        },
+                        { 
+                          header: "Choice", 
+                          accessorKey: "choice",
+                          Cell: ({ cell }: any) => (
+                            <div className={styles.choiceCell}>
+                              {cell.getValue() as string}
+                            </div>
+                          )
+                        }
+                      ]}
+                      data={getCurrentVotes()}
+                      enableColumnResizing
+                      layoutMode="grid"
+                      muiTableContainerProps={{ 
+                        sx: { maxHeight: '500px' } 
+                      }}
+                      initialState={{
+                        density: 'compact'
+                      }}
+                    />
                   </div>
                 )}
               </div>

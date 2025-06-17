@@ -11,7 +11,14 @@ jest.mock('material-react-table', () => ({
 
 // Mock VoteSummary
 jest.mock('../../app/components/VoteSummary', () => ({
-  VoteSummary: jest.fn(() => <div data-testid="mock-vote-summary" />)
+  VoteSummary: jest.fn(({ onViewVotes }) => (
+    <div data-testid="mock-vote-summary">
+      <button onClick={() => onViewVotes('invalid')}>View Invalid Votes</button>
+      <button onClick={() => onViewVotes('duplicate')}>View Duplicate Votes</button>
+      <button onClick={() => onViewVotes('valid')}>View Valid Votes</button>
+      <button onClick={() => onViewVotes('total')}>View Total Votes</button>
+    </div>
+  ))
 }));
 
 describe('PollsTab', () => {
@@ -128,7 +135,7 @@ describe('PollsTab', () => {
   it('toggles invalid votes list', () => {
     render(<PollsTab {...defaultProps} pollResults={[samplePollResults[0]]} />);
     
-    const invalidVotesButton = screen.getByText('Invalid Votes');
+    const invalidVotesButton = screen.getByText('View Invalid Votes');
     
     // Initially table should not be visible
     expect(screen.queryAllByTestId('mock-table')).toHaveLength(0);
@@ -145,7 +152,7 @@ describe('PollsTab', () => {
   it('toggles duplicate votes list', () => {
     render(<PollsTab {...defaultProps} pollResults={[samplePollResults[0]]} />);
     
-    const duplicateVotesButton = screen.getByText('Duplicate Votes');
+    const duplicateVotesButton = screen.getByText('View Duplicate Votes');
     
     // Initially table should not be visible
     expect(screen.queryAllByTestId('mock-table')).toHaveLength(0);
@@ -163,7 +170,7 @@ describe('PollsTab', () => {
     render(<PollsTab {...defaultProps} pollResults={[samplePollResults[0]]} />);
     
     // Show invalid votes table
-    fireEvent.click(screen.getByText('Invalid Votes'));
+    fireEvent.click(screen.getByText('View Invalid Votes'));
     
     // Get the MaterialReactTable call arguments
     const mockTableCall = (MaterialReactTable as jest.Mock).mock.calls[0][0];
@@ -200,7 +207,7 @@ describe('PollsTab', () => {
   it('renders correct table columns for invalid votes', () => {
     render(<PollsTab {...defaultProps} pollResults={[samplePollResults[0]]} />);
     
-    fireEvent.click(screen.getByText('Invalid Votes'));
+    fireEvent.click(screen.getByText('View Invalid Votes'));
     
     const mockTableCall = (MaterialReactTable as jest.Mock).mock.calls[0][0];
     const columns = mockTableCall.columns;
@@ -215,12 +222,12 @@ describe('PollsTab', () => {
   it('renders correct table columns for duplicate votes', () => {
     render(<PollsTab {...defaultProps} pollResults={[samplePollResults[0]]} />);
     
-    fireEvent.click(screen.getByText('Duplicate Votes'));
+    fireEvent.click(screen.getByText('View Duplicate Votes'));
     
     const mockTableCall = (MaterialReactTable as jest.Mock).mock.calls[0][0];
     const columns = mockTableCall.columns;
     
-    expect(columns).toHaveLength(3); // Username, Email, Choice
+    expect(columns).toHaveLength(3); // Username, Email, Choice (no Actions column for duplicates, no Time)
     expect(columns[0].header).toBe('Username');
     expect(columns[1].header).toBe('Email');
     expect(columns[2].header).toBe('Choice');

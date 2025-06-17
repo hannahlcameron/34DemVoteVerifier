@@ -41,6 +41,8 @@
 
 .pollNavigation {
   width: 300px;
+  min-width: 300px;
+  flex-shrink: 0;
   border: 1px solid #e9ecef;
   border-radius: 8px;
   background-color: white;
@@ -282,4 +284,66 @@
 .voteListSection :global(.MuiTableContainer-root) {
   overflow-x: auto;
   max-height: none !important;
+}
+
+.voteTableSection {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.tableTitle {
+  margin: 0;
+  color: #333;
+  font-size: 1.25rem;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #666;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+
+/* Material React Table customizations for new table */
+.voteTableSection :global(.MuiPaper-root) {
+  box-shadow: none;
+  border: 1px solid #e9ecef;
+}
+
+.voteTableSection :global(.MuiTableRow-root:hover) {
+  background-color: #f8f9fa;
+}
+
+.voteTableSection :global(.MuiTableCell-head) {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+.voteTableSection :global(.MuiTableCell-root) {
+  padding: 8px 12px;
+  white-space: normal;
+  overflow-wrap: break-word;
 }

@@ -9,6 +9,7 @@ interface VoteSummaryProps {
   validVotes: number;
   invalidVotes: number;
   duplicateVotes: number;
+  onViewVotes: (category: 'total' | 'valid' | 'invalid' | 'duplicate') => void;
 }
 
 export const VoteSummary: React.FC<VoteSummaryProps> = ({
@@ -18,7 +19,8 @@ export const VoteSummary: React.FC<VoteSummaryProps> = ({
   totalVotes,
   validVotes,
   invalidVotes,
-  duplicateVotes
+  duplicateVotes,
+  onViewVotes
 }) => (
     <div className={styles.container}>
       <h2 className={styles.title}>Poll: {name}</h2>
@@ -58,22 +60,38 @@ export const VoteSummary: React.FC<VoteSummaryProps> = ({
 
       <div className={styles.statsContainer}>
         <div className={styles.stats}>
-          <div className={styles.statItem}>
+          <button 
+            className={`${styles.statItem} ${styles.clickableStatItem}`}
+            onClick={() => onViewVotes('total')}
+            type="button"
+          >
             <span className={styles.statLabel}>Total Votes</span>
             <span className={`${styles.statValue} ${styles.totalVotes}`}>{totalVotes}</span>
-          </div>
-          <div className={styles.statItem}>
+          </button>
+          <button 
+            className={`${styles.statItem} ${styles.clickableStatItem}`}
+            onClick={() => onViewVotes('valid')}
+            type="button"
+          >
             <span className={styles.statLabel}>Valid Votes</span>
             <span className={`${styles.statValue} ${styles.validVotes}`}>{validVotes}</span>
-          </div>
-          <div className={styles.statItem}>
+          </button>
+          <button 
+            className={`${styles.statItem} ${styles.clickableStatItem}`}
+            onClick={() => onViewVotes('invalid')}
+            type="button"
+          >
             <span className={styles.statLabel}>Invalid Votes</span>
             <span className={`${styles.statValue} ${styles.invalidVotes}`}>{invalidVotes}</span>
-          </div>
-          <div className={styles.statItem}>
+          </button>
+          <button 
+            className={`${styles.statItem} ${styles.clickableStatItem}`}
+            onClick={() => onViewVotes('duplicate')}
+            type="button"
+          >
             <span className={styles.statLabel}>Duplicates</span>
             <span className={`${styles.statValue} ${styles.duplicateVotes}`}>{duplicateVotes}</span>
-          </div>
+          </button>
         </div>
       </div>
     </div>
