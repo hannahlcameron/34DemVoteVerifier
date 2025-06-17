@@ -3,6 +3,11 @@ import Modal from 'react-modal';
 import styles from '../styles/AliasModal.module.css';
 import { type Member } from '../vote-verification';
 
+// Set the app element for react-modal accessibility
+if (typeof document !== 'undefined' && typeof Modal.setAppElement === 'function') {
+  Modal.setAppElement('body');
+}
+
 interface AliasModalProps {
   isOpen: boolean;
   onClose: () => void;
