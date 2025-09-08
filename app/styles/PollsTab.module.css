@@ -9,6 +9,172 @@
   margin-bottom: 20px;
 }
 
+.uploadMethodToggle {
+  display: flex;
+  margin-bottom: 20px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.toggleMethodButton {
+  padding: 12px 24px;
+  border: none;
+  background-color: #f8f9fa;
+  color: #333;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-right: 1px solid #e9ecef;
+}
+
+.toggleMethodButton:last-child {
+  border-right: none;
+}
+
+.toggleMethodButton.active {
+  background-color: var(--primary-blue);
+  color: white;
+}
+
+.toggleMethodButton:hover:not(.active) {
+  background-color: #e9ecef;
+}
+
+.fileUploadSection {
+  /* Inherits existing styles */
+}
+
+.zoomSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.zoomLoginButton {
+  padding: 12px 24px;
+  background-color: #2D8CFF;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.zoomLoginButton:hover:not(:disabled) {
+  background-color: #1976D2;
+}
+
+.zoomLoginButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.zoomInfo {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+.meetingListSection {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background-color: white;
+  max-width: 600px;
+}
+
+.meetingListHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+}
+
+.meetingListHeader h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.meetingList {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.meetingItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.meetingItem:hover {
+  background-color: #f8f9fa;
+}
+
+.meetingItem:last-child {
+  border-bottom: none;
+}
+
+.meetingInfo {
+  flex: 1;
+}
+
+.meetingTitle {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.meetingDate {
+  margin: 0 0 4px 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.meetingDuration {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.meetingPolls {
+  margin-left: 16px;
+}
+
+.pollsBadge {
+  background-color: var(--primary-blue);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.noPollsBadge {
+  background-color: #e9ecef;
+  color: #666;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+
 .fileInput {
   padding: 10px;
   border: 1px solid #ccc;

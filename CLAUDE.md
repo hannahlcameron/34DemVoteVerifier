@@ -32,14 +32,15 @@ npm run lint:fix          # Auto-fix ESLint issues
 - **Backend**: AWS Amplify (Cognito, AppSync GraphQL, DynamoDB)
 - **UI**: Material-UI, Material React Table, React Modal
 - **Testing**: Jest + React Testing Library + jsdom
+- **External APIs**: Zoom API integration for poll data retrieval
 
 ### Core Structure
 ```
 app/
 ├── components/        # React components (tabs, modals, forms)
-├── hooks/            # Custom hooks (useVoteProcessing, useAliases)
+├── hooks/            # Custom hooks (useVoteProcessing, useAliases, useZoomIntegration)
 ├── styles/           # CSS modules for components
-├── api/              # Next.js API routes
+├── api/              # Next.js API routes (including Zoom OAuth endpoints)
 └── vote-verification.ts  # Core business logic for vote validation
 
 test/
@@ -102,14 +103,16 @@ npm run test:coverage
 ## Development Patterns
 
 ### State Management
-- Custom hooks for complex state (`useVoteProcessing`, `useAliases`)
+- Custom hooks for complex state (`useVoteProcessing`, `useAliases`, `useZoomIntegration`)
 - React Context for global state when needed
 - In-memory storage for aliases (Map-based)
+- Secure token storage in httpOnly cookies for Zoom OAuth
 
 ### File Processing
 - Robust CSV/TSV parsing with Papa Parse
 - Error handling for malformed data
 - Support for various poll platform formats
+- Zoom API integration for direct poll data retrieval
 
 ### TypeScript Configuration
 - Strict mode enabled
@@ -141,3 +144,35 @@ npm run test:coverage
 - Amplify sandbox for local testing
 - Mock data available in `test/data/` directory
 - No AWS credentials required for basic development
+
+## Zoom API Integration
+
+### Setup Requirements
+1. Create a Zoom app at https://marketplace.zoom.us/develop/create
+2. Configure OAuth redirect URI: `http://localhost:3000/api/zoom/callback`
+3. Add environment variables to `.env.local`:
+   ```
+   ZOOM_CLIENT_ID=your_zoom_client_id
+   ZOOM_CLIENT_SECRET=your_zoom_client_secret
+   ZOOM_REDIRECT_URI=http://localhost:3000/api/zoom/callback
+   NEXTAUTH_URL=http://localhost:3000
+   ```
+
+### API Endpoints
+- `GET /api/zoom/auth` - Initiates OAuth flow
+- `GET /api/zoom/callback` - Handles OAuth callback
+- `GET /api/zoom/meetings` - Lists user's past meetings with poll counts
+- `GET /api/zoom/polls/[meetingId]` - Retrieves poll data for specific meeting
+
+### Features
+- OAuth 2.0 authentication with Zoom
+- Meeting list with poll count indicators
+- Direct poll data import from Zoom meetings
+- Secure token storage in httpOnly cookies
+- Fallback to manual file upload if Zoom integration unavailable
+
+### Limitations
+- Poll data only available after meeting ends
+- Some meetings may require manual poll report generation in Zoom UI
+- Meetings shown are limited to last 30 days
+- Guest vote data may be incomplete in some cases
