@@ -1,13 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 const ZOOM_CLIENT_ID = process.env.ZOOM_CLIENT_ID;
-const ZOOM_CLIENT_SECRET = process.env.ZOOM_CLIENT_SECRET;
 const ZOOM_REDIRECT_URI = process.env.ZOOM_REDIRECT_URI || `${process.env.NEXTAUTH_URL}/api/zoom/callback`;
 
 export async function GET() {
-  console.log('Zoom auth endpoint called');
-  console.log('ZOOM_CLIENT_ID exists:', !!ZOOM_CLIENT_ID);
-  console.log('ZOOM_REDIRECT_URI:', ZOOM_REDIRECT_URI);
 
   if (!ZOOM_CLIENT_ID) {
     return NextResponse.json({ 

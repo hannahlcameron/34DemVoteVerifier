@@ -5,7 +5,8 @@ import {
   parseMemberList,
   parseVoteData,
   validateVotes,
-  getDuplicateVotes
+  getDuplicateVotes,
+  parseCSVVotes
 } from '../vote-verification';
 
 export interface CategorizedVotes {
@@ -149,7 +150,6 @@ export function useVoteProcessing() {
         const csv = e.target?.result as string;
         try {
           // Import the parseCSVVotes function directly to get multiple poll results
-          const { parseCSVVotes } = require('../vote-verification');
           const result = parseCSVVotes(csv);
           
           if ('error' in result) {

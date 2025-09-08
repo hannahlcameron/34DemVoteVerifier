@@ -24,7 +24,7 @@ interface PollsTabProps {
   onPollUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   hasMemberData: boolean;
   onCreateAlias: (username: string) => void;
-  onZoomPollsLoaded?: (polls: any[]) => void;
+  onZoomPollsLoaded?: (polls: unknown[]) => void;
 }
 
 export const PollsTab: React.FC<PollsTabProps> = ({
@@ -192,6 +192,14 @@ export const PollsTab: React.FC<PollsTabProps> = ({
                         key={meeting.id}
                         className={styles.meetingItem}
                         onClick={() => handleMeetingSelect(meeting.uuid)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleMeetingSelect(meeting.uuid);
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
                       >
                         <div className={styles.meetingInfo}>
                           <h4 className={styles.meetingTitle}>{meeting.topic}</h4>
@@ -227,7 +235,7 @@ export const PollsTab: React.FC<PollsTabProps> = ({
           <div className={styles.pollNavigation} data-testid="poll-navigation">
             <ul>
               {pollResults.map((poll, index) => (
-                <li 
+                <button 
                   key={index} 
                   className={`${styles.pollNavItem} ${selectedPollIndex === index ? styles.active : ''}`}
                   onClick={() => setSelectedPollIndex(index)}
@@ -238,7 +246,7 @@ export const PollsTab: React.FC<PollsTabProps> = ({
                   <div className={styles.pollNavName}>
                     <span className={styles.pollTitle}>{poll.name}</span>
                   </div>
-                </li>
+                </button>
               ))}
             </ul>
           </div>
@@ -276,7 +284,7 @@ export const PollsTab: React.FC<PollsTabProps> = ({
                           header: "Actions",
                           id: "actions",
                           size: 100,
-                          Cell: ({ row }: any) => (
+                          Cell: ({ row }: { row: { original: { username: string } } }) => (
                             <button 
                               onClick={(e: React.MouseEvent) => {
                                 e.stopPropagation();
@@ -291,7 +299,7 @@ export const PollsTab: React.FC<PollsTabProps> = ({
                         {
                           header: "Username",
                           accessorKey: "username",
-                          Cell: ({ cell }: any) => (
+                          Cell: ({ cell }: { cell: { getValue: () => unknown } }) => (
                             <div className={styles.usernameCell}>
                               {cell.getValue() as string}
                             </div>
@@ -300,7 +308,7 @@ export const PollsTab: React.FC<PollsTabProps> = ({
                         { 
                           header: "Email", 
                           accessorKey: "email",
-                          Cell: ({ cell }: any) => (
+                          Cell: ({ cell }: { cell: { getValue: () => unknown } }) => (
                             <div className={styles.emailCell}>
                               {cell.getValue() as string}
                             </div>
@@ -309,7 +317,7 @@ export const PollsTab: React.FC<PollsTabProps> = ({
                         { 
                           header: "Choice", 
                           accessorKey: "choice",
-                          Cell: ({ cell }: any) => (
+                          Cell: ({ cell }: { cell: { getValue: () => unknown } }) => (
                             <div className={styles.choiceCell}>
                               {cell.getValue() as string}
                             </div>
