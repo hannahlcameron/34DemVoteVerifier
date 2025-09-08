@@ -162,8 +162,10 @@ export const PollsTab: React.FC<PollsTabProps> = ({
                 <p className={styles.zoomInfo}>
                   Connect to your Zoom account to select meetings with poll data.
                   {error && error.includes('not configured') && (
-                    <br />
-                    <strong>Note:</strong> Zoom integration requires setup by an administrator.
+                    <>
+                      <br />
+                      <strong>Note:</strong> Zoom integration requires setup by an administrator.
+                    </>
                   )}
                 </p>
               </>
